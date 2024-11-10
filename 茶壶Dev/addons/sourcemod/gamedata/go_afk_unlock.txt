@@ -1,0 +1,99 @@
+"Games"
+{
+	"#default"
+	{
+		"Addresses"
+		{
+			"PlayerPreThink"
+			{
+				"signature"	"CTerrorPlayer::PreThink"
+			}
+		}
+		
+		"Signatures"
+		{
+			"CTerrorPlayer::PreThink"
+			{
+				"library"	"server"
+				"linux"		"@_ZN13CTerrorPlayer8PreThinkEv"
+			}
+		}
+	}
+	"left4dead"
+	{
+		"Offsets"
+		{
+			"PreThink_CompetitiveCondition"
+			{
+				"windows"	"290"
+				"linux"		"134"
+			}
+			"PreThink_HumanSurvivorsCondition"
+			{
+				"windows"	"406"
+				"linux"		"1036"
+			}
+		}
+		
+		"Signatures"
+		{
+			"CTerrorPlayer::PreThink"
+			{
+				"library"	"server"
+				"windows"	"\x83\x2A\x2A\x56\x57\x8B\x2A\xE8\x2A\x2A\x2A\x2A\x8B\x2A\xE8\x2A\x2A\x2A\x2A\x8B\x2A\x8B"
+				/* 83 ? ? 56 57 8B ? E8 ? ? ? ? 8B ? E8 ? ? ? ? 8B ? 8B */
+			}
+		}
+	}
+	"left4dead2"
+	{
+		"Addresses"
+		{
+			"PlayerGoingAFK"
+			{
+				"signature"	"CTerrorPlayer::Input_GoAwayFromKeyboard"
+			}
+		}
+		
+		"Offsets"
+		{
+			"PreThink_CompetitiveCondition"
+			{
+				"windows"	"309"
+				"linux"		"295"
+			}
+			"PreThink_HumanSurvivorsCondition"
+			{
+				"windows"	"428"
+				"linux"		"450"
+			}
+			"GoAFKInput_CompetitiveCondition"
+			{
+				"windows"	"10"
+				"linux"		"14"
+			}
+			"GoAFKInput_HumanSurvivorsCondition"
+			{
+				"windows"	"38"
+				"linux"		"130"
+			}
+		}
+		
+		"Signatures"
+		{
+			"CTerrorPlayer::PreThink"
+			{
+				"library"	"server"
+				"windows"	"\x55\x8B\x2A\x83\x2A\x2A\xA1\x2A\x2A\x2A\x2A\x33\x2A\x89\x2A\x2A\x56\x57\x8B\x2A\xE8\x2A\x2A\x2A\x2A\x8B\x2A\xE8"
+				/* 55 8B ? 83 ? ? A1 ? ? ? ? 33 ? 89 ? ? 56 57 8B ? E8 ? ? ? ? 8B ? E8 */
+			}
+			"CTerrorPlayer::Input_GoAwayFromKeyboard"
+			{
+				"library"	"server"
+				"linux"		"@_ZN13CTerrorPlayer24Input_GoAwayFromKeyboardEv"
+				"windows"	"\x57\x8B\x2A\xE8\x2A\x2A\x2A\x2A\x84\x2A\x75\x2A\x56\x6A"
+				/* 57 8B ? E8 ? ? ? ? 84 ? 75 ? 56 6A */
+			}
+		}
+	}
+}
