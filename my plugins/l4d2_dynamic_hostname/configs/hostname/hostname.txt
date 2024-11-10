@@ -1,0 +1,7 @@
+ServerName
+{
+	"2000"
+	{
+		"baseName"	"茶壶"
+	}
+}

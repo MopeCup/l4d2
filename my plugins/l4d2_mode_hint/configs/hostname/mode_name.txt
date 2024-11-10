@@ -1,0 +1,39 @@
+ModeName
+{
+    "反伤"
+    {
+        "ConVar" "anti_friendly_fire_enable"
+        "Flags" "1"
+        "text" "开启;关闭"
+    }
+    "免伤距离"
+    {
+        "ConVar" "lff_distance"
+        "Flags" "3"
+        "text" "码"
+    }
+    "过关回血"
+    {
+        "ConVar" "saferoom_naps_health"
+        "Flags" "0"
+        "text" "null"
+    }
+    "杀特回血"
+    {
+        "ConVar" "l4d2_Kill_inf_health_Infected_head"
+        "Flags" "3"
+        "text" "血"
+    }
+    "最大生命值"
+    {
+        "ConVar" "l4d2_health_Limit"
+        "Flags" "0"
+        "text" "null"
+    }
+    "特感强攻"
+    {
+        "ConVar" "aggresive_specials_patch_enable"
+        "Flags" "1"
+        "text" "开启;关闭"
+    }
+}
