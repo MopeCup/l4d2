@@ -23,7 +23,7 @@ public Plugin myinfo =
 
 ConVar g_cvKillSound, g_cvMultiKillHint, g_cvKillPrint;
 
-bool g_bKillSound, g_bMultiKillHint, g_bKillPrint;
+bool g_bKillSound, g_bMultiKillHint, g_bKillPrint, g_bKPSingle[MAXPLAYERS + 1];
 
 int g_iMultiKill[MAXPLAYERS + 1], g_iKillSI[MAXPLAYERS + 1];
 
@@ -32,12 +32,14 @@ Handle g_hMultiKill[MAXPLAYERS + 1];
 public void OnPluginStart(){
     g_cvKillSound = CreateConVar("lksa_kill_sound", "1", "是否开启击杀特感音效<0: 否, 1: 是>", PLUGIN_FLAG, true, 0.0, true, 1.0);
     g_cvMultiKillHint = CreateConVar("lksa_multikill_hint", "1", "是否开启连杀提示<0: 否, 1: 是>", PLUGIN_FLAG, true, 0.0, true, 1.0);
-    g_cvKillPrint = CreateConVar("lksa_kill_print", "1", "是否开启击杀播报<0: 否, 1: 是>", PLUGIN_FLAG, true, 0.0, true, 1.0);
+    g_cvKillPrint = CreateConVar("lksa_kill_print", "0", "是否开启击杀播报<0: 否, 1: 是>", PLUGIN_FLAG, true, 0.0, true, 1.0);
 
     GetCvars();
     g_cvKillSound.AddChangeHook(OnConVarChanged);
     g_cvMultiKillHint.AddChangeHook(OnConVarChanged);
     g_cvKillPrint.AddChangeHook(OnConVarChanged);
+
+    RegConsoleCmd("sm_kps", Cmd_KPS, "开启或关闭单独播报(仅限lksa_kill_print 0时)");
 
     HookEvent("round_start", Event_RoundStart, EventHookMode_PostNoCopy);
     HookEvent("round_end", Event_RoundEnd, EventHookMode_PostNoCopy);
@@ -50,6 +52,10 @@ public void OnPluginStart(){
     PrecacheSound(SOUND_HEADSHOT, false);
     PrecacheSound(SOUND_HEADSHOT_B, false);
     PrecacheSound(SOUND_KILLSHOT, false);
+
+    for(int i = 1; i <= MaxClients; i++){
+        g_bKPSingle[i] = false;
+    }
 }
 
 //================================================================================
@@ -77,6 +83,17 @@ public void OnMapEnd(){
 }
 
 //================================================================================
+//=                             Cmd
+//================================================================================
+Action Cmd_KPS(int client, int args){
+    if(g_bKillPrint)
+        return Plugin_Handled;
+    g_bKPSingle[client] = !g_bKPSingle[client];
+    ReplyToCommand(client, "已%s击杀播报", g_bKPSingle[client] ? "开启" : "关闭");
+    return Plugin_Handled;
+}
+
+//================================================================================
 //=                              Event
 //================================================================================
 void Event_RoundStart(Event event, const char[] name, bool dontBroadcast){
@@ -98,7 +115,7 @@ void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast){
     bool bHeadShot = event.GetBool("headshot");
     g_iKillSI[attacker] += 1;
     //播报击杀
-    if(g_bKillPrint)
+    if(g_bKillPrint || g_bKPSingle[attacker])
         PrintToChat(attacker, "击杀 %N (%d)", victim, g_iKillSI[attacker]);
 
     if(g_bKillSound || g_bMultiKillHint){

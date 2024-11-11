@@ -40,7 +40,7 @@ public Plugin myinfo =
 	name = "l4d2 TankFight",
 	author = "MopeCup",
 	description = "处理克局的各项事宜",
-	version = "1.8.0"
+	version = "1.8.1"
 };
 
 //===================================================================================
@@ -99,8 +99,8 @@ public void OnPluginStart(){
     g_cvTFSITimeRule.AddChangeHook(ConVarChanged);
 
     RegConsoleCmd("sm_tank", GetPathCmd);
-	RegConsoleCmd("sm_p", GetPathCmd);
-	RegConsoleCmd("sm_t", GetPathCmd);
+    RegConsoleCmd("sm_p", GetPathCmd);
+    RegConsoleCmd("sm_t", GetPathCmd);
 
     HookEvent("round_start", Event_RoundStart, EventHookMode_PostNoCopy);
     HookEvent("round_end", Event_RoundEnd, EventHookMode_PostNoCopy);
@@ -123,7 +123,22 @@ void GetCvar(){
 //===================================================================================
 Action GetPathCmd(int client, int args){
     int iPath = RoundToNearest(GetCurrentMaxFlow());
-    PrintToChat(client, "\x04[Current] \x05%d%%", iPath);
+    int iRound = GetGameRulesNumber();
+    int iTankFlow, iWitchFlow, iFlow;
+    ConVar cvVS_BossBuffer = FindConVar("versus_boss_buffer");
+    if(L4D2Direct_GetVSTankToSpawnThisRound(iRound)){
+        iFlow = RoundToCeil(L4D2Direct_GetVSTankFlowPercent(iRound) * 100.0);
+        if(iFlow > 0)
+            iFlow -= RoundToFloor(cvVS_BossBuffer.FloatValue / L4D2Direct_GetMapMaxFlowDistance() * 100.0);
+        iTankFlow = iFlow < 0 ? 0 : iFlow;
+    }
+    if(L4D2Direct_GetVSWitchToSpawnThisRound(iRound)){
+        iFlow = RoundToCeil(L4D2Direct_GetVSWitchFlowPercent(iRound) * 100.0);
+        if(iFlow > 0)
+            iFlow -= RoundToFloor(cvVS_BossBuffer.FloatValue / L4D2Direct_GetMapMaxFlowDistance() * 100.0);
+        iWitchFlow = iFlow < 0 ? 0 : iFlow;
+    }
+    PrintToChat(client, "\x04[Current: \x05%d%%|\x04Tank: \x05%d%%|\x04Witch: \x05%d%%]", iPath, iTankFlow, iWitchFlow);
     return Plugin_Handled;
 }
 
@@ -193,7 +208,7 @@ Action Timer_CheckPath(Handle timer){
     if(fPath > g_fSurMaxPath && fPath <= fDisablePath){
         g_fSurMaxPath = GetCurrentMaxFlow();
         float fLastPath = fDisablePath - fPath;
-        PrintToChatAll("继续推进\x05%f\x01将生成尸潮", fLastPath);
+        PrintToChatAll("继续推进\x05%.1f%%\x01将生成尸潮", fLastPath);
     }
     else if(fPath > fDisablePath){
         g_bPauseTankFightHordes = false;
@@ -454,4 +469,8 @@ bool IsValidSur(int client){
     if(client > 0 && client < MaxClients && IsClientInGame(client) && IsPlayerAlive(client) && GetClientTeam(client) == 2)
         return true;
     return false;
+}
+
+int GetGameRulesNumber(){
+    return GameRules_GetProp("m_bInSecondHalfOfRound");
 }
