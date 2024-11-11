@@ -11,7 +11,11 @@ None
 ### 2024.11.11 - v1.0.0
 1.  插件创建
 
+### 2024.11.12 - v1.0.1
+1.  新增指令sm_kps
+
 # 指令与Cvar
 1.  lksa_kill_sound - 是否开启击杀特感音效<0: 否, 1: 是>
 2.  lksa_multikill_hint - 是否开启连杀提示<0: 否, 1: 是>
 3.  lksa_kill_print - 是否开启击杀播报<0: 否, 1: 是>
+4.  sm_kps - 开启或关闭单独播报(仅限lksa_kill_print 0时)
