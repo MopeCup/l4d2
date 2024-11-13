@@ -9,7 +9,7 @@ public Plugin myinfo= {
 	name = "Enhance Bolt-ation Sniper",
 	author = "MopeCup",
 	description = "增强栓狙",
-	version = "1.0.0",
+	version = "1.0.1",
 	url = "N/A"
 };
 
@@ -64,6 +64,12 @@ Action TraceAttack(int victim, int &attacker, int &inflictor, float &damage, int
                 return Plugin_Changed;
             }
         }
+        case 6:{
+            if(IsCharging(victim)){
+                damage = damage * 2.0;
+                return Plugin_Changed;
+            }
+        }
     }
     return Plugin_Continue;
 }
@@ -105,6 +111,13 @@ bool IsJockeyLeaping(int jockey){
     GetEntPropVector(jockey, Prop_Data, "m_vecVelocity", fVel);
     fVel[2] = 0.0;
     if(GetVectorLength(fVel) >= 15.0 && GetEntPropEnt(jockey, Prop_Send, "m_hGroundEntity") == -1)
+        return true;
+    return false;
+}
+
+bool IsCharging(int charger){
+    int iAbility = GetEntPropEnt(charger, Prop_Send, "m_customAbility");
+    if(IsValidEntity(iAbility) && GetEntProp(iAbility, Prop_Send, "m_isCharging") > 0)
         return true;
     return false;
 }
