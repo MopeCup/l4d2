@@ -158,10 +158,10 @@ void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast){
                     PrintCenterText(attacker, "三连杀!");
                 }
                 case 4:{
-                    PrintCenterText(attacker, "四连杀!!");
+                    PrintCenterText(attacker, "四连超凡!!");
                 }
                 case 5:{
-                    PrintCenterText(attacker, "五连杀!!!");
+                    PrintCenterText(attacker, "五连绝世!!!");
                 }
                 case 6, 7:{
                     PrintCenterText(attacker, "超神!!!");
