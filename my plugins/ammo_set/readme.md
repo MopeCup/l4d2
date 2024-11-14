@@ -20,8 +20,6 @@
 
 </details>
 
-* <details><summary>更新日志</summary>
+* 更新日志
     * 2024.11.15 - v1.0.0
         1.  插件创建
-
-</details>
