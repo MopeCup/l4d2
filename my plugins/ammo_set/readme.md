@@ -11,7 +11,6 @@
     //初次离开安全区域前是否无限子弹<0: 否, 1: 是>
     as_safearea_infinite_ammo "1"
     ```
-
 </details>
 
 * <details><summary>指令</summary>
