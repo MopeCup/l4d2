@@ -7,7 +7,7 @@
 #include <left4dhooks>
 
 //常量定义
-#define VERSION "1.0.0"
+#define VERSION "1.0.1"
 //#define CVAR_FLAG FCVAR_SPONLY|FCVAR_NOTIFY
 #define VERSUS 2
 
@@ -173,7 +173,7 @@ void PrintFFReport(){
 	int client;
 	int[] clients = new int[MaxClients];
     for(client = 1; client <= MaxClients; client++){
-        if(IsClientConnected(client) && 
+        if(IsClientInGame(client) && 
         ((g_iGameMode == VERSUS && GetClientTeam(client) == 2) || (GetClientTeam(client) == 2 || (GetClientTeam(client) == 1 && IsGetBotOfIdlePlayer(client) != 0))))
             clients[count++] = client;
     }
