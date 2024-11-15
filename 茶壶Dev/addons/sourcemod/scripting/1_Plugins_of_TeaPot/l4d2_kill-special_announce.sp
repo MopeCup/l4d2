@@ -9,7 +9,7 @@ public Plugin myinfo =
 	name = "L4D2 Kill Special Announce",
 	author = "MopeCup",
 	description = "击杀特感提示",
-	version = "1.0.0",
+	version = "1.1.0",
 	url = ""
 }
 
@@ -20,12 +20,15 @@ public Plugin myinfo =
 #define SOUND_HEADSHOT "level/bell_normal.wav"
 #define SOUND_HEADSHOT_B "level/bell_impact.wav"
 #define SOUND_KILLSHOT "ui/littlereward.wav"
+#define SOUND_FINALLBONUS "level/scoreregular.wav"
 
-ConVar g_cvKillSound, g_cvMultiKillHint, g_cvKillPrint;
+ConVar g_cvKillSound, g_cvMultiKillHint, g_cvKillPrint, g_cvMultiKillTime;
 
 bool g_bKillSound, g_bMultiKillHint, g_bKillPrint, g_bKPSingle[MAXPLAYERS + 1];
 
 int g_iMultiKill[MAXPLAYERS + 1], g_iKillSI[MAXPLAYERS + 1];
+
+float g_fMultiKillTime;
 
 Handle g_hMultiKill[MAXPLAYERS + 1];
 
@@ -33,11 +36,13 @@ public void OnPluginStart(){
     g_cvKillSound = CreateConVar("lksa_kill_sound", "1", "是否开启击杀特感音效<0: 否, 1: 是>", PLUGIN_FLAG, true, 0.0, true, 1.0);
     g_cvMultiKillHint = CreateConVar("lksa_multikill_hint", "1", "是否开启连杀提示<0: 否, 1: 是>", PLUGIN_FLAG, true, 0.0, true, 1.0);
     g_cvKillPrint = CreateConVar("lksa_kill_print", "0", "是否开启击杀播报<0: 否, 1: 是>", PLUGIN_FLAG, true, 0.0, true, 1.0);
+    g_cvMultiKillTime = CreateConVar("lksa_multikill_time", "10.0", "保持连杀最长间隔时间", PLUGIN_FLAG, true, 0.1);
 
     GetCvars();
     g_cvKillSound.AddChangeHook(OnConVarChanged);
     g_cvMultiKillHint.AddChangeHook(OnConVarChanged);
     g_cvKillPrint.AddChangeHook(OnConVarChanged);
+    g_cvMultiKillTime.AddChangeHook(OnConVarChanged);
 
     RegConsoleCmd("sm_kps", Cmd_KPS, "开启或关闭单独播报(仅限lksa_kill_print 0时)");
 
@@ -69,6 +74,7 @@ void GetCvars(){
     g_bKillSound = g_cvKillSound.BoolValue;
     g_bMultiKillHint = g_cvMultiKillHint.BoolValue;
     g_bKillPrint = g_cvKillPrint.BoolValue;
+    g_fMultiKillTime = g_cvMultiKillTime.FloatValue;
 }
 
 //================================================================================
@@ -122,12 +128,12 @@ void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast){
         //首次击杀
         if(g_iMultiKill[attacker] == 0){
             g_iMultiKill[attacker] += 1;
-            g_hMultiKill[attacker] = CreateTimer(10.0, Timer_MKLateCheck, GetClientUserId(attacker));
+            g_hMultiKill[attacker] = CreateTimer(g_fMultiKillTime, Timer_MKLateCheck, GetClientUserId(attacker));
         }
-        else if(g_iMultiKill[attacker] <= 9){
+        else if(g_iMultiKill[attacker]){
             g_iMultiKill[attacker] += 1;
             KillTimer(g_hMultiKill[attacker]);
-            g_hMultiKill[attacker] = CreateTimer(10.0, Timer_MKLateCheck, GetClientUserId(attacker));
+            g_hMultiKill[attacker] = CreateTimer(g_fMultiKillTime, Timer_MKLateCheck, GetClientUserId(attacker));
         }
 
         //声音播放
@@ -140,8 +146,11 @@ void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast){
                     EmitSoundToClient(attacker, SOUND_KILLSHOT, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL);
                 }
             }
-            else{
+            else if(g_iMultiKill[attacker] <= 9){
                 EmitSoundToClient(attacker, SOUND_HEADSHOT_B, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL);
+            }
+            else{
+                EmitSoundToClient(attacker, SOUND_FINALLBONUS, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL);
             }
         }
 
@@ -164,12 +173,14 @@ void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast){
                     PrintCenterText(attacker, "五连杀!!!");
                 }
                 case 6, 7:{
-                    PrintCenterText(attacker, "超神!!!");
+                    PrintCenterText(attacker, "超凡脱俗!");
                 }
                 case 8, 9:{
-                    PrintCenterText(attacker, "无双! 万军取首");
+                    PrintCenterText(attacker, "天下无双!!");
                 }
             }
+            if(g_iMultiKill[attacker] > 9)
+                PrintCenterText(attacker, "天上天下，唯吾独尊!!!");
         }
     }
 }
