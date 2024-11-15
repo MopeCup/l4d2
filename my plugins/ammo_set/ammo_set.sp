@@ -9,7 +9,7 @@ public Plugin myinfo =
     name		= "Ammo Set",
     author		= "MopeCup",
     description	= "设置弹药",
-    version		= "1.0.0"
+    version		= "1.0.1"
 };
 
 //========================================================
@@ -83,13 +83,16 @@ void Event_PlayerLeftSafeArea(Event event, const char[] name, bool dontBroadcast
 
 void Event_WeaponFire(Event event, const char[] name, bool dontBroadcast){
     int client = GetClientOfUserId(event.GetInt("userid"));
+    int weaponID = event.GetInt("weaponid");
     if(IsValidSur(client) && (g_iInfinitAmmoType == 2 || (g_bSafeArea && !g_bPlayerLeftSafeArea))){
-        SetClips(client);
+        SetClips(client, weaponID);
     }
 }
 
 void Event_WeaponReload(Event event, const char[] name, bool dontBroadcast){
     int client = GetClientOfUserId(event.GetInt("userid"));
+    
+
     if(IsValidSur(client) && g_iInfinitAmmoType == 1){
         GiveClientAmmo(client);
     }
@@ -105,13 +108,20 @@ void GiveClientAmmo(int client){
     SetCommandFlags("give", flags|FCVAR_CHEAT);
 }
 
-void SetClips(int client){
+void SetClips(int client, int weaponID){
     int weapon = GetPlayerWeaponSlot(client, 0);
-    if(weapon == INVALID_ENT_REFERENCE) 
-        return;
-    char class[56];
-    GetEdictClassname(weapon, class, sizeof(class));
-    SetEntProp(weapon, Prop_Send, "m_iClip1", L4D2_GetIntWeaponAttribute(class, L4D2IWA_ClipSize) + 1);
+    int subWeapon = GetPlayerWeaponSlot(client, 1);
+    char class[56], subClass[56];
+    if(weapon != INVALID_ENT_REFERENCE){
+        GetEdictClassname(weapon, class, sizeof class);
+        if(L4D_GetWeaponID(class) == weaponID)
+            SetEntProp(weapon, Prop_Send, "m_iClip1", L4D2_GetIntWeaponAttribute(class, L4D2IWA_ClipSize) + 1);
+    }
+    if(subWeapon != INVALID_ENT_REFERENCE){
+        GetEdictClassname(subWeapon, subClass, sizeof subClass);
+        if(L4D_GetWeaponID(subClass) == weaponID && (weaponID == 1 || weaponID == 32))
+            SetEntProp(subWeapon, Prop_Send, "m_iClip1", L4D2_GetIntWeaponAttribute(subClass, L4D2IWA_ClipSize) + 1);
+    }
 }
 
 //========================================================
