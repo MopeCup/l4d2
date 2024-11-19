@@ -9,7 +9,7 @@ public Plugin myinfo =
 	name = "L4D2 Kill Special Announce",
 	author = "MopeCup",
 	description = "击杀特感提示",
-	version = "1.1.0",
+	version = "1.1.1",
 	url = ""
 }
 
@@ -52,11 +52,12 @@ public void OnPluginStart(){
     HookEvent("jockey_ride", Event_InterruptCombo, EventHookMode_Post);
     HookEvent("lunge_pounce", Event_InterruptCombo, EventHookMode_Post);
     HookEvent("charger_carry_start", Event_InterruptCombo, EventHookMode_Post);
-	HookEvent("tongue_grab", Event_InterruptCombo, EventHookMode_Post);
+    HookEvent("tongue_grab", Event_InterruptCombo, EventHookMode_Post);
 
     PrecacheSound(SOUND_HEADSHOT, false);
     PrecacheSound(SOUND_HEADSHOT_B, false);
     PrecacheSound(SOUND_KILLSHOT, false);
+    PrecacheSound(SOUND_FINALLBONUS, false);
 
     for(int i = 1; i <= MaxClients; i++){
         g_bKPSingle[i] = false;
