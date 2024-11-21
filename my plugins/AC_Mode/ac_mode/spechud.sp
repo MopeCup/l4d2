@@ -93,25 +93,29 @@ void Refresh_SHpanel(){
             StrCat(line, sizeof(line), sBuffer);
             //武器
             int mainWeapon = GetPlayerWeaponSlot(i, 0);
-            int mWepID = IdentifyWeapon(mainWeapon);
-            for(int j = 0; j < 15; j++){
-                if(StringToInt(g_sWeaponName[j][1]) == mWepID){
-                    Format(sBuffer, sizeof(sBuffer), "[%s ", g_sWeaponName[j][0]);
-                    StrCat(line, sizeof(line), sBuffer);
-                    break;
+            if(IsValidEntity(mainWeapon)){
+                int mWepID = IdentifyWeapon(mainWeapon);
+                for(int j = 0; j < 15; j++){
+                    if(StringToInt(g_sWeaponName[j][1]) == mWepID){
+                        Format(sBuffer, sizeof(sBuffer), "[%s ", g_sWeaponName[j][0]);
+                        StrCat(line, sizeof(line), sBuffer);
+                        break;
+                    }
                 }
+                int iClips = GetEntProp(mainWeapon, Prop_Send, "m_iClip1");
+                int iAmmo = L4D_GetReserveAmmo(i, mainWeapon);
+                Format(sBuffer, sizeof(sBuffer), "%d / %d", iClips, iAmmo);
+                StrCat(line, sizeof(line), sBuffer);
             }
-            int iClips = GetEntProp(mainWeapon, Prop_Send, "m_iClip1");
-            int iAmmo = L4D_GetReserveAmmo(i, mainWeapon);
-            Format(sBuffer, sizeof(sBuffer), "%d / %d", iClips, iAmmo);
-            StrCat(line, sizeof(line), sBuffer);
             int subWeapon = GetPlayerWeaponSlot(i, 1);
-            int sWepID = IdentifyWeapon(subWeapon);
-            for(int j = 15; j < 18; j++){
-                if(StringToInt(g_sWeaponName[j][1]) == sWepID){
-                    Format(sBuffer, sizeof(sBuffer), "|%s]", g_sWeaponName[j][0]);
-                    StrCat(line, sizeof(line), sBuffer);
-                    break;
+            if(IsValidEntity(subWeapon)){
+                int sWepID = IdentifyWeapon(subWeapon);
+                for(int j = 15; j < 18; j++){
+                    if(StringToInt(g_sWeaponName[j][1]) == sWepID){
+                        Format(sBuffer, sizeof(sBuffer), "|%s]", g_sWeaponName[j][0]);
+                        StrCat(line, sizeof(line), sBuffer);
+                        break;
+                    }
                 }
             }
             SHpanel.DrawText(line);
