@@ -12,7 +12,7 @@ public Plugin myinfo =
 {
 	name	= "point system",
 	author	= "MopeCup",
-	version = "1.1.1",
+	version = "1.1.2",
 
 }
 
@@ -205,7 +205,7 @@ public void OnMapEnd()
 
 void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 {
-	PrintPoint(0);
+	//PrintPoint(0);
 
 	OnMapEnd();
 }
@@ -534,6 +534,7 @@ int mW_Menu_Handler(Menu menu, MenuAction action, int client, int param2)
 		case MenuAction_End:
 		{
 			delete menu;
+			FakeClientCommand(client, "sm_show");
 		}
 	}
 	return 0;
@@ -593,6 +594,7 @@ int SW_Menu_Handler(Menu menu, MenuAction action, int client, int param2)
 		case MenuAction_End:
 		{
 			delete menu;
+			FakeClientCommand(client, "sm_show");
 		}
 	}
 	return 0;
@@ -655,6 +657,7 @@ int I_Menu_Handler(Menu menu, MenuAction action, int client, int param2)
 		case MenuAction_End:
 		{
 			delete menu;
+			FakeClientCommand(client, "sm_show");
 		}
 	}
 	return 0;
@@ -792,6 +795,7 @@ int Disorder_Menu_Handler(Menu menu, MenuAction action, int client, int itemNum)
 		case MenuAction_End:
 		{
 			delete menu;
+			FakeClientCommand(client, "sm_show");
 		}
 	}
 	return 0;
