@@ -125,6 +125,7 @@ public void OnPluginStart()
 	// HookEvent("player_death", Event_PlayerDeath, EventHookMode_Pre);
 	HookEvent("infected_death", Event_InfectedDeath);
 	// HookEvent("tank_spawn", Event_TankSpawn);
+	HookEvent("mission_lost", Event_MissionLost);
 
 	RegConsoleCmd("sm_point", Cmd_CheckPoint);
 	RegConsoleCmd("sm_bonus", Cmd_CheckPoint);
@@ -236,6 +237,22 @@ void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 			}
 		}
 	}
+}
+
+void Event_MissionLost(Event event, const char[] name, bool dontBroadcast){
+	for(int i = 1; i <= MaxClients; i++){
+		if(IsValidSur(i)){
+			int point = g_esData[i].money - 100;
+			if(point < 60)
+				continue;
+			else if(point < 160){
+				g_esData[i].money = 160;
+			}
+			else
+				g_esData[i].money = point;
+		}
+	}
+	PrintToChatAll("队伍团灭，所有生还扣除100点积分");
 }
 
 // void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast){
