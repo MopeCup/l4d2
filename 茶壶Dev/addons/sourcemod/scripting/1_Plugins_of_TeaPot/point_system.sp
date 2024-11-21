@@ -394,7 +394,7 @@ Action Cmd_Shop(int client, int args)
 	}
 	if (IsValidSur(client) && IsPlayerAlive(client) && IsClientInSafeArea(client))
 	{
-		FakeClientCommand(client, "sm_unshow");
+		FakeClientCommand(client, "sm_hide");
 		CreateShopMenu(client);
 	}
 	else
@@ -412,7 +412,7 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 		{
 			if (GetEngineTime() - g_fShopCD >= 2.0)
 			{
-				FakeClientCommand(client, "sm_unshow");
+				FakeClientCommand(client, "sm_hide");
 				g_fShopCD = GetEngineTime();
 			}
 			CreateShopMenu(client);

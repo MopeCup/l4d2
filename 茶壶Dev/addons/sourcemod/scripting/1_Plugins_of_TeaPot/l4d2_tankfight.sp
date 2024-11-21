@@ -17,15 +17,18 @@ bool
     g_bSpecialSpawner,
     g_bNekoSpecials,
 
+    g_bTFHealthDebuff,
     g_bPauseTankFightHordes;
 
 ConVar 
     g_cvTFSINumRule,
-    g_cvTFSITimeRule;
+    g_cvTFSITimeRule,
+    g_cvTFHealthDebuff;
 
 int 
     g_iNeko_SpawnTime,
-    g_iTFSINumRule;
+    g_iTFSINumRule,
+    g_iCount[MAXPLAYERS + 1];
 
 float 
     g_fSS_SISpawnTime_Min,
@@ -35,12 +38,15 @@ float
     g_fTankSpawnPath,
     g_fSurMaxPath;
 
+Handle
+    g_hTFDebuff[MAXPLAYERS + 1];
+
 public Plugin myinfo =
 {
 	name = "l4d2 TankFight",
 	author = "MopeCup",
 	description = "处理克局的各项事宜",
-	version = "1.8.1"
+	version = "1.9.1"
 };
 
 //===================================================================================
@@ -95,8 +101,12 @@ public void OnLibraryRemoved(const char[] sName){
 public void OnPluginStart(){
     g_cvTFSINumRule = CreateConVar("tfsic_sinum_rule", "-1", "克局刷出特感上限衰减数量<-1: 按坦克刷出数量衰减, >=0: 按给定数量衰减>", PLUGIN_FLAG);
     g_cvTFSITimeRule = CreateConVar("tfsic_sitime_rule", "0.0", "克局刷出特感间隔修改数值<实际值等于此值加上刷特插件设置值>", PLUGIN_FLAG);
+    g_cvTFHealthDebuff = CreateConVar("tfsic_health_debuff", "0", "是否开启坦克激怒后丢失目标缓慢扣血<0: 否, 1: 是>", PLUGIN_FLAG, true, 0.0, true, 1.0);
+
+    GetCvar();
     g_cvTFSINumRule.AddChangeHook(ConVarChanged);
     g_cvTFSITimeRule.AddChangeHook(ConVarChanged);
+    g_cvTFHealthDebuff.AddChangeHook(ConVarChanged);
 
     RegConsoleCmd("sm_tank", GetPathCmd);
     RegConsoleCmd("sm_p", GetPathCmd);
@@ -116,6 +126,7 @@ void ConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue){
 void GetCvar(){
     g_iTFSINumRule = g_cvTFSINumRule.IntValue;
     g_fTFSITimeRule = g_cvTFSITimeRule.FloatValue;
+    g_bTFHealthDebuff = g_cvTFHealthDebuff.BoolValue;
 }
 
 //===================================================================================
@@ -181,12 +192,14 @@ Action Timer_CheckTank_Death(Handle timer){
             LogError("不要同时使用多种多特插件");
             return Plugin_Stop;
         }
-        else if(g_bNekoSpecials)
+        else if(g_bNekoSpecials){
             if(g_fTFSITimeRule != 0)
                 ServerCommand("sm_cvar Special_Spawn_Time %d", g_iNeko_SpawnTime);
-        else
+        }
+        else{
             if(g_fTFSITimeRule != 0)
-            TF_SetSpawnTime(g_fSS_SISpawnTime_Max, g_fSS_SISpawnTime_Min);
+                TF_SetSpawnTime(g_fSS_SISpawnTime_Max, g_fSS_SISpawnTime_Min);
+        }
 
         PrintToChatAll("坦克已全部死亡，刷特配置恢复正常");
     }
@@ -227,6 +240,53 @@ Action Timer_TFReSet(Handle timer){
         g_bPauseTankFightHordes = true;
         CreateTimer(1.0, Timer_CheckPath, _, TIMER_REPEAT);
     }
+    return Plugin_Stop;
+}
+
+Action Timer_TFCheckActive(Handle timer, int first){
+    if(!first){
+        for(int i = 1; i <= MaxClients; i++){
+            if(IsClientInGame(i) && GetClientTeam(i) == 3 && IsPlayerAlive(i) && GetEntProp(i, Prop_Send, "m_zombieClass") == 8){
+                if(GetEntProp(i, Prop_Send, "m_hasVisibleThreats") != 1){
+                    if(g_hTFDebuff[i] == null){
+                        g_iCount[i] = 0;
+                        int userid = GetClientUserId(i);
+                        g_hTFDebuff[i] = CreateTimer(0.1, Timer_TFDebuff, userid);
+                    }
+                    return Plugin_Stop;
+                }
+            }
+        }
+        return Plugin_Continue;
+    }
+
+    for(int i = 1; i <= MaxClients; i++){
+        if(IsClientInGame(i) && GetClientTeam(i) == 3 && IsPlayerAlive(i) && GetEntProp(i, Prop_Send, "m_zombieClass") == 8){
+            if(IsActiveTank(i)){
+                if(g_hTFDebuff[i] == null){
+                    g_iCount[i] = 0;
+                    int userid = GetClientUserId(i);
+                    g_hTFDebuff[i] = CreateTimer(0.1, Timer_TFDebuff, userid);
+                }
+                return Plugin_Stop;
+            }
+        }
+    }
+    return Plugin_Continue;
+}
+
+Action Timer_TFDebuff(Handle timer, int userid){
+    int client = GetClientOfUserId(userid);
+    g_hTFDebuff[client] = null;
+    if(!client)
+        return Plugin_Stop;
+    if(GetEntProp(client, Prop_Send, "m_hasVisibleThreats") != 1){
+        g_iCount[client]++;
+        ReCheck(client);
+        return Plugin_Stop;
+    }
+    int first = 0;
+    CreateTimer(1.0, Timer_TFCheckActive, first, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
     return Plugin_Stop;
 }
 
@@ -383,6 +443,11 @@ void SetTFHordesPausePre(){
     g_fTankSpawnPath = GetCurrentMaxFlow();
     CreateTimer(1.0, Timer_CheckPath, _, TIMER_REPEAT);
     g_bPauseTankFightHordes = true;
+    if(g_bTFHealthDebuff){
+        PrintToChatAll("Tank每丢失生还视野0.1s,将损失部分生命值");
+        int first = 1;
+        CreateTimer(1.0, Timer_TFCheckActive, first, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
+    }
 }
 
 public Action L4D_OnSpawnMob(int &amount){
@@ -424,6 +489,11 @@ void ResetPlugin(){
 
     g_fTankSpawnPath = 0.0;
     g_bPauseTankFightHordes = false;
+
+    for(int i = 1; i <= MaxClients; i++){
+        if(g_hTFDebuff[i] != null)
+            delete g_hTFDebuff[i];
+    }
 }
 
 float GetCurrentMaxFlow(){
@@ -473,4 +543,24 @@ bool IsValidSur(int client){
 
 int GetGameRulesNumber(){
     return GameRules_GetProp("m_bInSecondHalfOfRound");
+}
+
+//是否为激活的坦克
+bool IsActiveTank(int client){
+    if(GetEntProp(client, Prop_Send, "m_zombieState") == 1 || GetEntProp(client, Prop_Send, "m_hasVisibleThreats") == 1)
+        return true;
+    return false;
+}
+
+void ReCheck(int client){
+    if(g_iCount[client] <= 10){
+        g_hTFDebuff[client] = CreateTimer(0.1, Timer_TFDebuff, GetClientUserId(client));
+    }
+    else{
+        g_iCount[client] = 0;
+        int iHealth = GetClientHealth(client);
+        float dmg = iHealth > 8000 ? 150.0 : 15.0;
+        SDKHooks_TakeDamage(client, client, client, dmg);
+        g_hTFDebuff[client] = CreateTimer(0.1, Timer_TFDebuff, GetClientUserId(client));
+    }
 }
