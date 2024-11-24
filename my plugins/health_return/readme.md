@@ -3,8 +3,8 @@
 
 * 依赖
 
-    [left4dhooks](https://forums.alliedmods.net/showthread.php?t=321696)
-    [cup_function](https://github.com/MopeCup/l4d2/tree/main/my%20plugins)
+    1.  [left4dhooks](https://forums.alliedmods.net/showthread.php?t=321696)
+    2.  [cup_function](https://github.com/MopeCup/l4d2/tree/main/my%20plugins/cup)
 
 * <details><summary>ConVar</summary>
 
