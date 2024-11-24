@@ -115,7 +115,7 @@ void Refresh_RUpanel(){
         if(IsValidPlayer_Sur(i)){
             char sPlayerName[32];
             GetClientName(i, sPlayerName ,sizeof sPlayerName);
-            Format(line, sizeof(line), "%s %s", g_bPlayerReady[i] ? SYSMBOL_READY : SYSMBOL_UNREADY, sPlayerName);
+            Format(line, sizeof(line), "%s %s", g_bPlayerReady[i] ? SYSMBOL_R : SYSMBOL_UR, sPlayerName);
             ruPanel.DrawText(line);
         }
     }
@@ -179,7 +179,7 @@ public Action L4D_OnFirstSurvivorLeftSafeArea(int client){
 }
 
 void RoUR_Hint(){
-    if(IsAllSurReady() || g_bReadyUp)
+    if(IsAllSurReady(false) || g_bReadyUp)
         return;
     char sBuffer[128];
     for(int i = 1; i <= MaxClients; i++){

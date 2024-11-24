@@ -12,7 +12,7 @@ public Plugin myinfo =
 {
 	name	= "point system",
 	author	= "MopeCup",
-	version = "1.1.2",
+	version = "1.2.0",
 
 }
 
@@ -104,7 +104,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 {
 	CreateNative("GetPlayerMoney", native_GetPlayerMoney);
 	CreateNative("GetTeamPoints", native_GetTeamPoints);
-
+	CreateNative("GetTeamBonus", native_GetPlayerBonus);
 	RegPluginLibrary("point_system");
 
 	g_bLateLoad = late;
@@ -338,8 +338,20 @@ void PrintPoint(int player)
 		iPointSum += iPlayerPoint[client];
 	}
 
+	float fHealth = 0.0;
+	count = 0;
+	for(i = 1; i <= MaxClients; i++){
+		if(IsValidSur(i)){
+			if(IsPlayerAlive(i))
+				fHealth += float(GetClientHealth(i));
+			count++;
+		}
+	}
+	float fBonus = fHealth / float(count);
+
+
 	if (player == 0)
-		g_iTotalPoint += iPointSum;
+		g_iTotalPoint += RoundToNearest(iPointSum * (1 + fBonus/100.0));
 
 	//排序
 	int j;
@@ -362,7 +374,7 @@ void PrintPoint(int player)
 	if (player == 0)
 	{
 		client = clients[0];
-		CPrintToChatAll("{green}分数统计\n{green}[累计总分: {olive}%d {green}| 本关总分: {olive}%d {green}] \n{green}[个人最高] {olive}%N - %d", g_iTotalPoint, iPointSum, client, iPlayerPoint[client]);
+		CPrintToChatAll("{green}分数统计\n{green}[累计总分: {olive}%d {green}| 本关总分: {olive}%d {green}| 奖励分: {olive}%.1f%% {green}] \n{green}[个人最高] {olive}%N - %d", g_iTotalPoint, iPointSum, fBonus, client, iPlayerPoint[client]);
 		for (i = 0; i < infoMax; i++)
 		{
 			client = clients[i];
@@ -373,10 +385,10 @@ void PrintPoint(int player)
 		if ((GetClientTeam(player) == 1 && IsGetBotOfIdlePlayer(player) != 0) || GetClientTeam(player) == 2)
 		{
 			client = clients[0];
-			CPrintToChat(player, "{green}[当前分数] {olive}%d\n{green}[个人最高] {olive}%N - %d\n{green}[你的分数] {olive}%d", iPointSum, client, iPlayerPoint[client], iPlayerPoint[player]);
+			CPrintToChat(player, "{green}[当前分数{olive}%d {green}| 奖励分: {olive}%.1f%% {green}]\n[个人最高] {olive}%N - %d\n{green}[你的分数] {olive}%d", iPointSum, fBonus, client, iPlayerPoint[client], iPlayerPoint[player]);
 		}
 		else {
-			CPrintToChat(player, "{green}[当前分数] {olive}%d\n{green}[个人最高] {olive}%N - %d", iPointSum, client, iPlayerPoint[client]);
+			CPrintToChat(player, "{green}[当前分数{olive}%d {green}| 奖励分: {olive}%.1f%% {green}]\n[个人最高] {olive}%N - %d", iPointSum, fBonus, client, iPlayerPoint[client]);
 		}
 		g_hWritePath = CreateTimer(1.0, Timer_WritePath, _, TIMER_REPEAT);
 	}
@@ -984,4 +996,27 @@ int GetTeamPoints(){
 		}
 	}
 	return (g_iTotalPoint + iPointSum);
+}
+
+int native_GetPlayerBonus(Handle plugin, int numParams){
+	return GetPlayerBonus();
+}
+
+/**
+ * 获取团队的奖励分
+ * 
+ * @return 返回生还的奖励分
+ */
+int GetPlayerBonus(){
+	float fHealth = 0.0;
+	int count = 0;
+	for(int i = 1; i <= MaxClients; i++){
+		if(IsValidSur(i)){
+			if(IsPlayerAlive(i))
+				fHealth += float(GetClientHealth(i));
+			count++;
+		}
+	}
+	float fBonus = fHealth / float(count);
+	return RoundToNearest(fBonus);
 }

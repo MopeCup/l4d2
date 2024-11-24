@@ -14,19 +14,19 @@ ModeName
     }
     "过关回血"
     {
-        "ConVar" "saferoom_naps_health"
+        "ConVar" "hr_saferoom_naps"
         "Flags" "0"
         "text" "null"
     }
     "杀特回血"
     {
-        "ConVar" "l4d2_Kill_inf_health_Infected_head"
+        "ConVar" "hr_base_return"
         "Flags" "3"
         "text" "血"
     }
     "最大生命值"
     {
-        "ConVar" "l4d2_health_Limit"
+        "ConVar" "hr_max_health"
         "Flags" "0"
         "text" "null"
     }

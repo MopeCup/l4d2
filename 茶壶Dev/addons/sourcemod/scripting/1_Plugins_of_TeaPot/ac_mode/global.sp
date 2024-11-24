@@ -3,6 +3,8 @@
 #define SYSMBOL_ARROW "▶"
 #define SOUND_COUNTDOWN "level/countdown.wav"
 #define SOUND_START "level/scoreregular.wav"
+#define SYSMBOL_R "♖"
+#define SYSMBOL_UR "♜"
 
 ConVar
     g_cvServerName,
