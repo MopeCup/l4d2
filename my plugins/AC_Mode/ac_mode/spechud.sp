@@ -50,7 +50,7 @@ void Refresh_SHpanel(){
     SHpanel.DrawText(line);
 
     //路程
-    Format(line, sizeof(line), "%s[Current ", SYSMBOL_ARROW);
+    Format(line, sizeof(line), "%s [Current ", SYSMBOL_ARROW);
     Format(sBuffer, sizeof(sBuffer), "%d% ", GetAllFlow(2));
     StrCat(line, sizeof line, sBuffer);
     char sPath[16];

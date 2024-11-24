@@ -4,10 +4,14 @@
 //-----point_system-----
 native int GetPlayerMoney(int client);
 native int GetTeamPoints();
+native int GetTeamBonus();
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max){
     MarkNativeAsOptional("GetPlayerMoney");
     MarkNativeAsOptional("GetTeamPoints");
+    MarkNativeAsOptional("GetTeamBonus");
+
+    RegPluginLibrary("ac_mode");
     //g_bLateLoad = late;
     return APLRes_Success;
 }

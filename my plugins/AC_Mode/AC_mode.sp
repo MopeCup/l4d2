@@ -11,7 +11,7 @@ public Plugin myinfo =
 {
 	name	= "AC Mode",
 	author	= "MopeCup",
-	version = "1.0.0",
+	version = "1.0.1",
 };
 
 #include "ac_mode/global.sp"

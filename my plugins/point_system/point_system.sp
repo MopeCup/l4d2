@@ -17,41 +17,41 @@ public Plugin myinfo =
 }
 
 static const char g_sMainWeapons[][][] = {
-	{ "shotgun_chrome", "铁喷", "models/w_models/weapons/w_pumpshotgun_A.mdl", "125", "0", "8" }, 
-	{ "pumpshotgun", "木喷", "models/w_models/weapons/w_shotgun.mdl", "125", "0", "3" }, 
-	{ "smg", "乌兹", "models/w_models/weapons/w_smg_uzi.mdl", "125", "0", "2" }, 
-	{ "smg_silenced", "消音冲锋", "models/w_models/weapons/w_smg_a.mdl", "125", "0", "7" }, 
-	{ "autoshotgun", "连喷", "models/w_models/weapons/w_autoshot_m4super.mdl", "200", "200", "4" }, 
-	{ "shotgun_spas", "SPAS", "models/w_models/weapons/w_shotgun_spas.mdl", "300", "300", "11" }, 
-	{ "rifle", "M16A2", "models/w_models/weapons/w_rifle_m16a2.mdl", "250", "250", "5" }, 
-	{ "rifle_desert", "三连发", "models/w_models/weapons/w_desert_rifle.mdl", "220", "220", "9" }, 
-	{ "rifle_ak47", "AK47", "models/w_models/weapons/w_rifle_ak47.mdl", "950", "950", "26" }, 
-	{ "sniper_military", "连狙", "models/w_models/weapons/w_sniper_military.mdl", "2000", "2000", "10" }, 
-	{ "hunting_rifle", "木狙", "models/w_models/weapons/w_sniper_mini14.mdl", "350", "350", "6" }, 
-	{ "sniper_awp", "AWP", "models/w_models/weapons/w_sniper_awp.mdl", "1000", "1000", "35" }, 
-	{ "sniper_scout", "鸟狙", "models/w_models/weapons/w_sniper_scout.mdl", "125", "0", "36" }, 
-	{ "smg_mp5", "MP5", "models/w_models/weapons/w_smg_mp5.mdl", "125", "0", "33" }, 
-	{ "rifle_sg552", "SG552", "models/w_models/weapons/w_rifle_sg552.mdl", "225", "225", "34" },
+	{ "shotgun_chrome", "铁喷", "models/w_models/weapons/w_pumpshotgun_A.mdl", "50", "0", "8" }, 
+	{ "pumpshotgun", "木喷", "models/w_models/weapons/w_shotgun.mdl", "50", "0", "3" }, 
+	{ "smg", "乌兹", "models/w_models/weapons/w_smg_uzi.mdl", "50", "0", "2" }, 
+	{ "smg_silenced", "消音冲锋", "models/w_models/weapons/w_smg_a.mdl", "50", "0", "7" }, 
+	{ "autoshotgun", "连喷", "models/w_models/weapons/w_autoshot_m4super.mdl", "180", "180", "4" }, 
+	{ "shotgun_spas", "SPAS", "models/w_models/weapons/w_shotgun_spas.mdl", "200", "200", "11" }, 
+	{ "rifle", "M16A2", "models/w_models/weapons/w_rifle_m16a2.mdl", "170", "170", "5" }, 
+	{ "rifle_desert", "三连发", "models/w_models/weapons/w_desert_rifle.mdl", "175", "175", "9" }, 
+	{ "rifle_ak47", "AK47", "models/w_models/weapons/w_rifle_ak47.mdl", "400", "400", "26" }, 
+	{ "sniper_military", "连狙", "models/w_models/weapons/w_sniper_military.mdl", "650", "650", "10" }, 
+	{ "hunting_rifle", "木狙", "models/w_models/weapons/w_sniper_mini14.mdl", "250", "250", "6" }, 
+	{ "sniper_awp", "AWP", "models/w_models/weapons/w_sniper_awp.mdl", "500", "500", "35" }, 
+	{ "sniper_scout", "鸟狙", "models/w_models/weapons/w_sniper_scout.mdl", "50", "0", "36" }, 
+	{ "smg_mp5", "MP5", "models/w_models/weapons/w_smg_mp5.mdl", "50", "0", "33" }, 
+	{ "rifle_sg552", "SG552", "models/w_models/weapons/w_rifle_sg552.mdl", "180", "180", "34" },
 	//{"weapon_grenade_launcher",		"榴弹发射器",	"models/w_models/weapons/w_grenade_launcher.mdl"},
 	//{"weapon_rifle_m60",			"M60",			"models/w_models/weapons/w_m60.mdl"},
 };
 
 static const char g_sSubWeapons[][][] = {
 	// 需要使用近战解锁插件
-	{"fireaxe",			 "斧头",			 "models/weapons/melee/w_fireaxe.mdl",		   "215", "215"},
-	{ "baseball_bat",	  "棒球棒",		"models/weapons/melee/w_bat.mdl",			  "125", "125"},
-	{ "cricket_bat",	 "球拍",			 "models/weapons/melee/w_cricket_bat.mdl",	   "125", "125"},
-	{ "crowbar",		 "撬棍",			 "models/weapons/melee/w_crowbar.mdl",		   "180", "180"},
-	{ "frying_pan",		"平底锅",		  "models/weapons/melee/w_frying_pan.mdl",	   "100", "100"},
-	{ "golfclub",		  "高尔夫球棍", "models/weapons/melee/w_golfclub.mdl",		   "550", "550"},
-	{ "electric_guitar", "吉他",			 "models/weapons/melee/w_electric_guitar.mdl", "135", "135"},
-	{ "katana",			"武士刀",		  "models/weapons/melee/w_katana.mdl",		   "250", "250"},
-	{ "machete",		 "砍刀",			 "models/weapons/melee/w_machete.mdl",		   "240", "240"},
-	{ "tonfa",		   "警棍",		   "models/weapons/melee/w_tonfa.mdl",		   "80",	 "80" },
-	{ "knife",		   "小刀",		   "models/w_models/weapons/w_knife_t.mdl",		"250", "250"},
-	{ "pitchfork",	   "草叉",		   "models/weapons/melee/w_pitchfork.mdl",	   "75",	 "75" },
-	{ "shovel",			"铁铲",			"models/weapons/melee/w_shovel.mdl",			 "125", "125"},
-	{ "pistol_magnum",   "马格南",		 "",											 "125", "0"	},
+	{"fireaxe",			 "斧头",			 "models/weapons/melee/w_fireaxe.mdl",		   "50", "0"},
+	{ "baseball_bat",	  "棒球棒",		"models/weapons/melee/w_bat.mdl",			  "0", "0"},
+	{ "cricket_bat",	 "球拍",			 "models/weapons/melee/w_cricket_bat.mdl",	   "0", "0"},
+	{ "crowbar",		 "撬棍",			 "models/weapons/melee/w_crowbar.mdl",		   "0", "0"},
+	{ "frying_pan",		"平底锅",		  "models/weapons/melee/w_frying_pan.mdl",	   "0", "0"},
+	{ "golfclub",		  "高尔夫球棍", "models/weapons/melee/w_golfclub.mdl",		   "0", "0"},
+	{ "electric_guitar", "吉他",			 "models/weapons/melee/w_electric_guitar.mdl", "0", "0"},
+	{ "katana",			"武士刀",		  "models/weapons/melee/w_katana.mdl",		   "50", "0"},
+	{ "machete",		 "砍刀",			 "models/weapons/melee/w_machete.mdl",		   "50", "0"},
+	{ "tonfa",		   "警棍",		   "models/weapons/melee/w_tonfa.mdl",		   "0",	 "0" },
+	{ "knife",		   "小刀",		   "models/w_models/weapons/w_knife_t.mdl",		"50", "0"},
+	{ "pitchfork",	   "草叉",		   "models/weapons/melee/w_pitchfork.mdl",	   "0",	 "0" },
+	{ "shovel",			"铁铲",			"models/weapons/melee/w_shovel.mdl",			 "0", "0"},
+	{ "pistol_magnum",   "马格南",		 "",											 "50", "0"	},
  //{"weapon_chainsaw",		"电锯",			"models/weapons/melee/w_chainsaw.mdl"},
 };
 
@@ -62,7 +62,7 @@ static const char g_sItems[][][] = {
 	{ "vomitjar",				  "胆汁瓶",			"",														"40",  "40" },
 	{ "upgradepack_incendiary", "燃烧弹升级包", "models/w_models/weapons/w_eq_incendiary_ammopack.mdl", "40",  "40" },
 	{ "upgradepack_explosive",  "高爆弹升级包", "models/w_models/weapons/w_eq_explosive_ammopack.mdl",  "30",	"30" },
-	{ "laser_sight",			 "红点升级",		 "",													 "250", "250"},
+	{ "laser_sight",			 "红点升级",		 "",													 "180", "180"},
 };
 
 ConVar
@@ -104,7 +104,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 {
 	CreateNative("GetPlayerMoney", native_GetPlayerMoney);
 	CreateNative("GetTeamPoints", native_GetTeamPoints);
-	CreateNative("GetTeamBonus", native_GetPlayerBonus);
+	CreateNative("GetTeamBonus", native_GetTeamBonus);
 	RegPluginLibrary("point_system");
 
 	g_bLateLoad = late;
@@ -181,7 +181,7 @@ public void L4D_OnFirstSurvivorLeftSafeArea_Post(int client)
 public void OnClientDisconnect(int client)
 {
 	g_esData[client].CleanInfected();
-	g_esData[client].money = 160;
+	//g_esData[client].money = 160;
 }
 
 // public void OnMapStart(){
@@ -192,7 +192,7 @@ public void OnClientDisconnect(int client)
 public void OnMapEnd()
 {
 	g_bLeftSafeArea = false;
-	if (L4D_IsMissionFinalMap(true))
+	if (L4D_IsMissionFinalMap())
 	{
 		g_iTotalPoint = 0;
 		for (int i = 1; i <= MaxClients; i++)
@@ -243,9 +243,8 @@ void Event_MissionLost(Event event, const char[] name, bool dontBroadcast){
 	for(int i = 1; i <= MaxClients; i++){
 		if(IsValidSur(i)){
 			int point = g_esData[i].money - 100;
-			if(point < 60)
-				continue;
-			else if(point < 160){
+			
+			if(point < 160){
 				g_esData[i].money = 160;
 			}
 			else
@@ -998,8 +997,8 @@ int GetTeamPoints(){
 	return (g_iTotalPoint + iPointSum);
 }
 
-int native_GetPlayerBonus(Handle plugin, int numParams){
-	return GetPlayerBonus();
+int native_GetTeamBonus(Handle plugin, int numParams){
+	return GetTeamBonus();
 }
 
 /**
@@ -1007,7 +1006,7 @@ int native_GetPlayerBonus(Handle plugin, int numParams){
  * 
  * @return 返回生还的奖励分
  */
-int GetPlayerBonus(){
+int GetTeamBonus(){
 	float fHealth = 0.0;
 	int count = 0;
 	for(int i = 1; i <= MaxClients; i++){
