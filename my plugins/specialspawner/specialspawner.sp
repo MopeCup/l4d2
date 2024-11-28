@@ -175,8 +175,8 @@ public void OnPluginStart() {
 	g_cSpawnWeights[SI_JOCKEY] =	CreateConVar("ss_jockey_weight",		"100",						"jockey产生比重", _, true, 0.0);
 	g_cSpawnWeights[SI_CHARGER] =	CreateConVar("ss_charger_weight",		"100",						"charger产生比重", _, true, 0.0);
 	g_cScaleWeights =				CreateConVar("ss_scale_weights",		"0",						"缩放相应特感的产生比重 [0 = 关闭 | 1 = 开启](开启后,总比重越大的越容易先刷出来, 动态控制特感刷出顺序)", _, true, 0.0, true, 1.0);
-	g_cSpawnTimeMin =				CreateConVar("ss_time_min",				"4.1",						"特感的最小产生时间", _, true, 0.1);
-	g_cSpawnTimeMax =				CreateConVar("ss_time_max",				"5.0",						"特感的最大产生时间", _, true, 1.0);
+	g_cSpawnTimeMin =				CreateConVar("ss_time_min",				"14.1",						"特感的最小产生时间", _, true, 0.1);
+	g_cSpawnTimeMax =				CreateConVar("ss_time_max",				"15.0",						"特感的最大产生时间", _, true, 1.0);
 	g_cSpawnTimeMode =				CreateConVar("ss_time_mode",			"2",						"特感的刷新时间模式[0 = 随机 | 1 = 递增(杀的越快刷的越快) | 2 = 递减(杀的越慢刷的越快)]", _, true, 0.0, true, 2.0);
 
 	g_cBaseLimit =					CreateConVar("ss_base_limit",			"4",						"生还者团队不超过4人时有多少个特感", _, true, 0.0, true, 32.0);
@@ -231,6 +231,8 @@ public void OnPluginStart() {
 	HookEvent("player_team",			Event_PlayerTeam);
 	HookEvent("player_spawn",			Event_PlayerSpawn);
 	HookEvent("player_death",			Event_PlayerDeath,	EventHookMode_Pre);
+
+	RegConsoleCmd("sm_queque", cmdQueque);
 
 	RegAdminCmd("sm_weight",		cmdSetWeight,	ADMFLAG_RCON, "设置特感生成比重");
 	RegAdminCmd("sm_limit",			cmdSetLimit,	ADMFLAG_RCON, "设置特感生成数量");
