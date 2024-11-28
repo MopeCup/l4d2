@@ -21,16 +21,27 @@ void ArrayMoveForward() {
 //将一只死亡特感写入待位特感
 void WriteIntoSpawnQueque(int class){
     class = class - 1;
-    int preSetClass[SI_MAX_SIZE];
+    int quequeClass[SI_MAX_SIZE];
+    GetSITypeCount();
     for (int i = 0; i < SI_MAX_SIZE; i++) {
-        preSetClass[i] = CheckQueque(i);
-        if (preSetClass[i] > g_iSpawnLimits[i]) {
-            int num = preSetClass[i] - g_iSpawnLimits[i];
+        quequeClass[i] = CheckQueque(i);
+        int num = quequeClass[i] + g_iSpawnCounts[i] - g_iSpawnLimits[i];
+        if (i == class)
+            num++;
+        //如果没有变动，不进行修正
+        if (num == 0)
+            continue;
+        //存在多余特感
+        else if (num > 0) {
             ModifiedArray(num, i);
-            preSetClass[i] = CheckQueque(i);
         }
+        else if (num < 0) {
+            ModifiedArray(num, i);
+        }
+        quequeClass[i] = CheckQueque(i);
     }
-    if (preSetClass[class] + 1 <= g_iSpawnLimits[class]) {
+    //写入
+    if (quequeClass[class] + 1 <= g_iSpawnLimits[class]) {
         for (int i = 0; i < 32; i++) {
             if (g_iSISpawnQueque[i] == -1) {
                 g_iSISpawnQueque[i] = class;
@@ -54,9 +65,15 @@ int CheckQueque(int class){
 void ModifiedArray(int num, int class){
     //清除不需要的特感
     for (int i = 31; i >= 0; i--) {
-        if (g_iSISpawnQueque[i] == class && num != 0) {
+        //特感数大于设定数
+        if (g_iSISpawnQueque[i] == class && num > 0) {
             g_iSISpawnQueque[i] = -1;
             num--;
+        }
+        //特感数小于设定数
+        if (g_iSISpawnQueque[i] == -1 && num < 0) {
+            g_iSISpawnQueque[i] = class;
+            num++;
         }
     }
     //如果有0在中间把特感往前移动一位填补
@@ -95,4 +112,18 @@ void InitSISpawnQueque() {
         }
     }
     SortIntegers(g_iSISpawnQueque, count, Sort_Random);
+}
+
+Action cmdQueque(int client, int args) {
+    PrintQueque();
+    return Plugin_Handled;
+}
+
+void PrintQueque() {
+    char sBuffer[128], sTest[4];
+    for (int i = 0; i < 32; i++) {
+        Format(sTest, sizeof sTest, "%d ", g_iSISpawnQueque[i]);
+        StrCat(sBuffer, sizeof sBuffer, sTest);
+    }
+    PrintToChatAll("%s", sBuffer);
 }
