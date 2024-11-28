@@ -46,7 +46,7 @@ public Plugin myinfo =
 	name = "l4d2 TankFight",
 	author = "MopeCup",
 	description = "处理克局的各项事宜",
-	version = "1.9.1"
+	version = "1.9.2"
 };
 
 //===================================================================================
@@ -351,13 +351,42 @@ public Action L4D_OnSpawnTank(const float vecPos[3], const float vecAng[3]){
 }
 
 //处理特感生成
-public Action L4D_OnSpawnSpecial(int &zombieClass, const float vecPos[3], const float vecAng[3]){
+// public Action L4D_OnSpawnSpecial(int &zombieClass, const float vecPos[3], const float vecAng[3]){
+//     int sILimit;
+//     if(!g_bSpecialSpawner && !g_bNekoSpecials)
+//         return Plugin_Continue;
+//     else if(g_bSpecialSpawner && g_bNekoSpecials){
+//         LogError("Do not use multiple special infected bots plugins at the same time");
+//         return Plugin_Continue;
+//     }
+//     else if(g_bNekoSpecials)
+//         sILimit = NekoSpecials_GetSpecialsNum();
+//     else
+//         sILimit = SS_GetSILimit();
+    
+//     int currentSINum = GetCurrentSINum();
+//     int currentTankNum = GetCurrentTankNum();
+//     if(GetCurrentTankNum() == 0)
+//         return Plugin_Continue;
+
+//     if(g_iTFSINumRule == -1){
+//         if((currentSINum + currentTankNum + 1) > sILimit)
+//             return Plugin_Handled;
+//     }
+//     else{
+//         if((currentSINum + 1) > (sILimit - g_iTFSINumRule))
+//             return Plugin_Handled;
+//     }
+//     return Plugin_Continue;
+// }
+
+public void L4D_OnSpawnSpecial_Post(int client, int zombieClass, const float vecPos[3], const float vecAng[3]){
     int sILimit;
     if(!g_bSpecialSpawner && !g_bNekoSpecials)
-        return Plugin_Continue;
+        return;
     else if(g_bSpecialSpawner && g_bNekoSpecials){
         LogError("Do not use multiple special infected bots plugins at the same time");
-        return Plugin_Continue;
+        return;
     }
     else if(g_bNekoSpecials)
         sILimit = NekoSpecials_GetSpecialsNum();
@@ -367,17 +396,16 @@ public Action L4D_OnSpawnSpecial(int &zombieClass, const float vecPos[3], const 
     int currentSINum = GetCurrentSINum();
     int currentTankNum = GetCurrentTankNum();
     if(GetCurrentTankNum() == 0)
-        return Plugin_Continue;
+        return;
 
     if(g_iTFSINumRule == -1){
-        if((currentSINum + currentTankNum + 1) > sILimit)
-            return Plugin_Handled;
+        if((currentSINum + currentTankNum) > sILimit)
+            ForcePlayerSuicide(client);
     }
     else{
-        if((currentSINum + 1) > (sILimit - g_iTFSINumRule))
-            return Plugin_Handled;
+        if((currentSINum) > (sILimit - g_iTFSINumRule))
+            ForcePlayerSuicide(client);
     }
-    return Plugin_Continue;
 }
 
 //获取刷特时间
