@@ -1,6 +1,7 @@
 #include <sourcemod>
 #include <left4dhooks>
 #include <l4d2_nativevote>
+#include "cup/cup_function.sp"
 
 #pragma semicolon 1
 #pragma newdecls required
@@ -10,7 +11,7 @@ public Plugin myinfo =
 	name = "l4d2 teapot commands",
 	author = "MopeCup",
 	description = "提供一系列指令",
-	version = "1.2.0",
+	version = "1.3.0",
 	url = ""
 }
 
@@ -19,13 +20,17 @@ public void OnPluginStart(){
     RegConsoleCmd("sm_s", Cmd_Afk, "快速闲置");
     RegConsoleCmd("sm_afk", Cmd_Afk, "快速闲置");
     RegConsoleCmd("sm_AFK", Cmd_Afk, "快速闲置");
-    //Cvar
-    RegAdminCmd("sm_addcvar", Cmd_Cvar, ADMFLAG_GENERIC, "修改Cvar");
     //旁观
     RegConsoleCmd("sm_spec", Cmd_Spec, "旁观");
     RegConsoleCmd("sm_away", Cmd_Spec, "旁观");
     //开位
     RegConsoleCmd("sm_slot", Cmd_Slot, "开位");
+
+    //Lazer
+    RegAdminCmd("sm_lazer", Cmd_Lazer, ADMFLAG_GENERIC, "获取镭射");
+    RegAdminCmd("sm_ls", Cmd_Lazer, ADMFLAG_GENERIC, "获取镭射");
+    //Cvar
+    RegAdminCmd("sm_addcvar", Cmd_Cvar, ADMFLAG_GENERIC, "修改Cvar");
 
     AddCommandListener(Afk_Command, "go_away_from_keyboard");
 }
@@ -41,7 +46,7 @@ Action Cmd_Afk(int client, int args){
 
 void OnNextFrame_AfkCmd(int client){
     client = GetClientOfUserId(client);
-    if(!IsClientAndInGame(client) || GetClientTeam(client) != 2){
+    if(!client || !IsClientAndInGame(client) || GetClientTeam(client) != 2){
         //PrintToChatAll("[Test] 不满足闲置条件");
         return;
     }
@@ -56,7 +61,8 @@ Action Afk_Command(int client, const char[] command, int args){
     if(!IsClientAndInGame(client) || GetClientTeam(client) != 2)
         return Plugin_Handled;
     //换用left4dhooks的闲置函数，解决倒地不能闲置的问题
-    L4D_GoAwayFromKeyboard(client);
+    //L4D_GoAwayFromKeyboard(client);
+    RequestFrame(OnNextFrame_AfkCmd, GetClientUserId(client));
     return Plugin_Handled;
 }
 
@@ -157,6 +163,16 @@ void SlotVote_Handler(L4D2NativeVote vote, VoteAction action, int param1, int pa
             }
         }
     }
+}
+
+//=============================================================================
+//=                         Lazer
+//=============================================================================
+Action Cmd_Lazer(int client, int args){
+    if(!IsClientAndInGame(client))
+        return Plugin_Handled;
+    CheatCommand(client, "upgrade_add", "laser_sight");
+    return Plugin_Handled;
 }
 
 bool IsClientAndInGame(int client){
