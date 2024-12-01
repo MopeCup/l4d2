@@ -1,6 +1,6 @@
 # 茶壶详细更新日志
 ### v1.1.4
-* <details><summary>HT与TR新增投票
+* <details><summary>HT与TR新增投票</summary>
 
     * 内容：模式HT与TR新增子弹设置投票
 
