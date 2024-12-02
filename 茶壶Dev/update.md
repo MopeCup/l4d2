@@ -1,5 +1,20 @@
 # 茶壶详细更新日志
-### v1.1.4
+### v1.1.5
+* <details><summary>备弹更新</summary>
+
+    * 内容：
+    
+        1. 新增模式MS投票10倍备弹
+        2. 删除模式DG备弹投票，改为默认无限备弹
+    
+    * 文件：
+
+        1. 新增 cfg/vote/ammo/ammo_x10.cfg
+        2. 改动 addons/sourcemod/data/config_vote_MS.cfg
+        3. 改动 addons/sourcemod/data/config_vote_DG.cfg
+        4. 改动 cfg/vote/1_DG
+</details>
+
 * <details><summary>HT与TR新增投票</summary>
 
     * 内容：模式HT与TR新增子弹设置投票
