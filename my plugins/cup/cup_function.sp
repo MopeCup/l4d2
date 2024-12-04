@@ -184,7 +184,7 @@ stock int GetPlayerNum(){
  * @param client    索引
  * @param command   指令名
  * @param val       参数
- * @return          no return 
+ * @noreturn
  */
 stock void CheatCommand(int client, const char[] command, char[] val = ""){
     if(!IsValidClient(client))

@@ -1,12 +1,12 @@
 # 插件描述
-本插件改自fdxx的[l4d2_gift]https://github.com/fdxx/l4d2_plugins/blob/main/l4d2_gift.sp
+本插件改自fdxx的[l4d2_gift](https://github.com/fdxx/l4d2_plugins/blob/main/l4d2_gift.sp)
 在此基础上对掉落概率与掉落类型做了重做处理
 
 * 依赖
 
-    1. [multicolors]https://github.com/fdxx/l4d2_plugins/blob/main/multicolors.sp
-    2. [l4d2_weapons_spawn]https://github.com/fdxx/l4d2_plugins/blob/main/include/l4d2_weapons_spawn.inc
-    3. [cup/cup_function]https://github.com/MopeCup/l4d2/tree/main/my%20plugins/cup
+    1. [multicolors](https://github.com/fdxx/l4d2_plugins/blob/main/multicolors.sp)
+    2. [l4d2_weapons_spawn](https://github.com/fdxx/l4d2_plugins/blob/main/include/l4d2_weapons_spawn.inc)
+    3. [cup/cup_function](https://github.com/MopeCup/l4d2/tree/main/my%20plugins/cup)
 
 * <details><summary>ConVar</summary>
 
