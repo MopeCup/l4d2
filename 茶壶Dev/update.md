@@ -17,6 +17,8 @@
         6. 删除 cfg/vote/multiplePlayer/
         7. 新增 cfg/vote/multiplePlayer/autoJoin_on.cfg
         8. 新增 cfg/vote/multiplePlayer/autoJoin_off.cfg
+        9. 删除 cfg/vote/botLimit
+        10. 改动 cfg/vote/ 所有子模式文件
 
 * <details><summary>备弹更新</summary>
 
