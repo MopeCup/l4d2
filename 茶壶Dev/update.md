@@ -1,5 +1,23 @@
 # 茶壶详细更新日志
-### v1.1.5
+### v1.1.6
+* <details><summary>多人更新</summary>
+
+    * 内容：
+
+        1. 合并l4d2_bot_manager与bots为bots
+        2. 将多人投票指令独立出来(!slot与!sbot)
+    
+    * 文件：
+
+        1. 新增 addons/sourcemod/scripting/bots_manager.sp
+        2. 改动 addons/sourcemod/data/
+        3. 改动 cfg/2_PluginsCfgOnce.cfg
+        4. 改动 cfg/vote/serverSetting/kickBots.cfg
+        5. 删除 cfg/vote/serverSetting/killAllBots.cfg
+        6. 删除 cfg/vote/multiplePlayer/
+        7. 新增 cfg/vote/multiplePlayer/autoJoin_on.cfg
+        8. 新增 cfg/vote/multiplePlayer/autoJoin_off.cfg
+
 * <details><summary>备弹更新</summary>
 
     * 内容：
