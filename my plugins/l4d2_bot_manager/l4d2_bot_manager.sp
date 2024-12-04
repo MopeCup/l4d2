@@ -18,7 +18,7 @@
     更改离开安全区域处死人机为，离开安全区域处死多余的人机
 */
 
-public Plugin:myinfo= {
+public Plugin myinfo= {
 	name = "l4d2 bot manager",
 	author = "MopeCup",
 	description = "阻止全Bot生还队伍",
@@ -137,39 +137,6 @@ public void OnClientPostAdminCheck(int client){
     //if(IsValidSI(client) && GetEntProp(client, Prop_Send, "m_zombieClass") != 8)
         SDKHook(client, SDKHook_TraceAttack, TraceAttack);
 }
-
-//-----Event-----
-//玩家受伤后
-// public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
-// {
-//     if(!GetConVarBool(cvReduceSBHeadshotDmg))
-//         return;
-    
-// 	int victim = GetClientOfUserId(GetEventInt(event, "userid"));
-// 	int attacker = GetClientOfUserId(GetEventInt(event, "attacker"));
-
-// 	if(!IsValidSur(attacker) || !IsValidSI(victim))
-// 		return;
-	
-//     //受击者为坦克或攻击者玩家则返回
-//     if(GetEntProp(victim, Prop_Send, "m_zombieClass") == 8)
-//         return;
-    
-// 	int attack_dmg = GetEventInt(event, "dmg_health");
-// 	int hitgroup = GetEventInt(event, "hitgroup");
-//     int victimhealth = GetClientHealth(victim);
-
-// 	//PrintToChatAll("1.击中部位为%d,击中伤害为%d", hitgroup, attack_dmg);
-
-//     //命中头部时，返还3/4的血量
-//     if(hitgroup == 1){
-//         attack_dmg = attack_dmg * 3;
-//         attack_dmg = attack_dmg / 4;
-//         victimhealth = victimhealth + attack_dmg;
-
-//         SetEntityHealth(victim, victimhealth);
-//     }
-// }
 
 //玩家死亡后
 void Event_PlayerDeath(Handle event, const char[] name, bool dontBroadcast){

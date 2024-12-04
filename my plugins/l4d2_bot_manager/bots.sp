@@ -48,6 +48,7 @@ ConVar
 	g_cSpecNotify,
 	g_cGiveType,
 	g_cGiveTime,
+	g_cSBHeadShotDmg,
 	g_cSurLimit;
 
 int
@@ -308,20 +309,23 @@ public void OnPluginStart() {
 
 	g_cBotLimit =				CreateConVar("bots_limit",				"4",		"开局Bot的数量", CVAR_FLAGS, true, 1.0, true, float(MaxClients));
 	g_cJoinLimit =				CreateConVar("bots_join_limit",			"-1",		"生还者玩家数量达到该值后将禁用sm_join命令和本插件的自动加入功能(不会影响游戏原有的加入功能). \n-1=插件不进行处理.", CVAR_FLAGS, true, -1.0, true, float(MaxClients));
-	g_cJoinFlags =				CreateConVar("bots_join_flags",			"3",		"额外玩家加入生还者的方法. \n0=插件不进行处理, 1=输入!join手动加入, 2=进服后插件自动加入, 3=手动+自动.", CVAR_FLAGS);
-	g_cJoinRespawn =			CreateConVar("bots_join_respawn",		"1",		"玩家加入生还者时如果没有存活的Bot可以接管是否复活. \n0=否, 1=是, -1=总是复活(该值为-1时将允许玩家通过切换队伍/退出重进刷复活).", CVAR_FLAGS);
-	g_cSpecNotify =				CreateConVar("bots_spec_notify",		"3",		"完全旁观玩家点击鼠标左键时, 提示加入生还者的方式 \n0=不提示, 1=聊天栏, 2=屏幕中央, 3=弹出菜单.", CVAR_FLAGS);
-	g_eWeapon[0].Flags =		CreateConVar("bots_give_slot0",			"131071",	"随机主武器(数字相加). \n\
+	g_cJoinFlags =				CreateConVar("bots_join_flags",			"0",		"额外玩家加入生还者的方法. \n0=插件不进行处理, 1=输入!join手动加入, 2=进服后插件自动加入, 3=手动+自动.", CVAR_FLAGS);
+	g_cJoinRespawn =			CreateConVar("bots_join_respawn",		"0",		"玩家加入生还者时如果没有存活的Bot可以接管是否复活. \n0=否, 1=是, -1=总是复活(该值为-1时将允许玩家通过切换队伍/退出重进刷复活).", CVAR_FLAGS);
+	g_cSpecNotify =				CreateConVar("bots_spec_notify",		"0",		"完全旁观玩家点击鼠标左键时, 提示加入生还者的方式 \n0=不提示, 1=聊天栏, 2=屏幕中央, 3=弹出菜单.", CVAR_FLAGS);
+	g_eWeapon[0].Flags =		CreateConVar("bots_give_slot0",			"0",		"随机主武器(数字相加). \n\
 																					0=无,1=UZI,2=MP5,4=MAC,8=木喷,16=铁喷,32=M16,64=三连发,128=AK47,256=SG552,\n\
 																					512=1代连喷,1024=2代连喷,2048=木狙,4096=军狙,8192=鸟狙,16384=AWP,32768=M60,65536=榴弹.", CVAR_FLAGS);
-	g_eWeapon[1].Flags =		CreateConVar("bots_give_slot1",			"1064",		"随机副武器(数字相加).\n\ 
+	g_eWeapon[1].Flags =		CreateConVar("bots_give_slot1",			"0",		"随机副武器(数字相加).\n\
 																					0=无,1=小手枪,2=马格南,4=电锯,8=斧头,16=平底锅,32=砍刀,64=棒球棒,128=撬棍,256=球拍,\n\
 																					512=警棍,1024=武士刀,2048=吉他,4096=小刀,8192=球棍,16384=铁铲,32768=草叉,65536=盾牌,131071=所有.", CVAR_FLAGS);
 	g_eWeapon[2].Flags =		CreateConVar("bots_give_slot2",			"0",		"随机投掷物(数字相加). \n0=无, 1=燃烧瓶, 2=土质炸弹, 4=胆汁瓶, 7=所有.", CVAR_FLAGS);
-	g_eWeapon[3].Flags =		CreateConVar("bots_give_slot3",			"1",		"随机医疗品(数字相加). \n0=无, 1=医疗包, 2=电击器, 4=燃烧弹药包, 8=高爆弹药包, 15=所有.", CVAR_FLAGS);
-	g_eWeapon[4].Flags =		CreateConVar("bots_give_slot4",			"3",		"随机急救药给(数字相加). \n0=无, 1=止痛药, 2=肾上腺素, 3=所有.", CVAR_FLAGS);
-	g_cGiveType =				CreateConVar("bots_give_type",			"2",		"根据什么来给玩家装备. \n0=无, 1=每个槽位的设置, 2=当前存活生还者的平均装备质量(仅主副武器).", CVAR_FLAGS);
+	g_eWeapon[3].Flags =		CreateConVar("bots_give_slot3",			"0",		"随机医疗品(数字相加). \n0=无, 1=医疗包, 2=电击器, 4=燃烧弹药包, 8=高爆弹药包, 15=所有.", CVAR_FLAGS);
+	g_eWeapon[4].Flags =		CreateConVar("bots_give_slot4",			"0",		"随机急救药给(数字相加). \n0=无, 1=止痛药, 2=肾上腺素, 3=所有.", CVAR_FLAGS);
+	g_cGiveType =				CreateConVar("bots_give_type",			"0",		"根据什么来给玩家装备. \n0=无, 1=每个槽位的设置, 2=当前存活生还者的平均装备质量(仅主副武器).", CVAR_FLAGS);
 	g_cGiveTime =				CreateConVar("bots_give_time",			"0",		"什么时候给玩家装备. \n0=每次出生时, 1=只在本插件创建Bot和复活玩家时.", CVAR_FLAGS);
+
+	//bots_manager
+	g_cSBHeadShotDmg = 			CreateConVar("bots_sb_headshot_dmg", 	"1",		"是否衰减人机的爆头伤害.\n0=否, 1=是", CVAR_FLAGS);
 
 	g_cSurLimit = FindConVar("survivor_limit");
 	g_cSurLimit.Flags &= ~FCVAR_NOTIFY;
@@ -344,7 +348,7 @@ public void OnPluginStart() {
 	g_cGiveType.AddChangeHook(CvarChanged_Weapon);
 	g_cGiveTime.AddChangeHook(CvarChanged_Weapon);
 
-	AutoExecConfig(true, "bots");
+	//AutoExecConfig(true, "bots");
 
 	RegConsoleCmd("sm_afk",				cmdGoIdle,		"闲置");
 	RegConsoleCmd("sm_teams",			cmdTeamPanel,	"团队菜单");
@@ -354,6 +358,13 @@ public void OnPluginStart() {
 	RegAdminCmd("sm_away",				cmdJoinTeam1,	ADMFLAG_ROOT,	"加入旁观者");
 	RegAdminCmd("sm_spec",				cmdJoinTeam1,	ADMFLAG_ROOT,	"加入旁观者");
 	RegAdminCmd("sm_bot",				cmdBotSet,		ADMFLAG_ROOT,	"设置开局Bot的数量");
+
+	//bots_manager
+	RegAdminCmd("sm_kickbots",			cmdKickBots, 	ADMFLAG_ROOT,	"踢出并重新设置开局人机数量");
+	RegAdminCmd("sm_kb",				cmdKickBots, 	ADMFLAG_ROOT,	"踢出并重新设置开局人机数量");
+
+	RegConsoleCmd("sm_sbot",			cmdBotVote,		"投票设置开局人机");
+	RegConsoleCmd("sm_setbot", 			cmdBotVote, 	"投票设置开局人机");
 
 	HookEvent("round_end",				Event_RoundEnd,		EventHookMode_PostNoCopy);
 	HookEvent("round_start",			Event_RoundStart,	EventHookMode_PostNoCopy);
@@ -917,9 +928,13 @@ void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast) {
 
 void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
-	if (!client || !IsClientInGame(client) || !IsFakeClient(client) || GetClientTeam(client) != TEAM_SURVIVOR)
+	if (!client || !IsClientInGame(client) || GetClientTeam(client) != TEAM_SURVIVOR)
 		return;
+	if (CheckAlivePlayerNum() == 0)
+		CreateTimer(1.0, Timer_RebootGame, _, TIMER_FLAG_NO_MAPCHANGE); 
 
+	if (!IsFakeClient(client))
+		return;
 	int player = GetIdlePlayerOfBot(client);
 	if (player && IsClientInGame(player) && !IsFakeClient(player) && GetClientTeam(player) == TEAM_SPECTATOR) {
 		SetHumanSpec(client, player);
@@ -1886,3 +1901,5 @@ int Math_GetRandomInt(int min, int max) {
 int GetNativeBotJoinLimit(Handle plugin, int numParams){
 	return GetConVarInt(g_cJoinLimit);
 }
+
+#include "bots_manager.sp"

@@ -26,3 +26,6 @@
     sm_kickbot - 踢出人机(sm_kickbot 0 - 踢出所有人机, sm_kickbot 1 - 仅踢出超过cvar bots_join_limit (bot.sp)值的Bot)
 
     lbm_reduce_headshot_dmg - 是否启用取消bot爆头增伤<0 - 否, 1 - 是>
+
+# 注意
+l4d2_bot_manager已停止维护!!!   请使用bots_manager和bots一起编译
