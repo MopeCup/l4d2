@@ -9,7 +9,7 @@ public Plugin myinfo =
 	name = "L4D2 Kill Special Announce",
 	author = "MopeCup",
 	description = "击杀特感提示",
-	version = "1.1.1",
+	version = "1.2.0",
 	url = ""
 }
 
@@ -24,9 +24,9 @@ public Plugin myinfo =
 
 ConVar g_cvKillSound, g_cvMultiKillHint, g_cvKillPrint, g_cvMultiKillTime;
 
-bool g_bKillSound, g_bMultiKillHint, g_bKillPrint, g_bKPSingle[MAXPLAYERS + 1];
+bool g_bKillSound, g_bMultiKillHint, g_bKPSingle[MAXPLAYERS + 1];
 
-int g_iMultiKill[MAXPLAYERS + 1], g_iKillSI[MAXPLAYERS + 1];
+int g_iMultiKill[MAXPLAYERS + 1], g_iKillSI[MAXPLAYERS + 1], g_iKillPrint;
 
 float g_fMultiKillTime;
 
@@ -35,7 +35,7 @@ Handle g_hMultiKill[MAXPLAYERS + 1];
 public void OnPluginStart(){
     g_cvKillSound = CreateConVar("lksa_kill_sound", "1", "是否开启击杀特感音效<0: 否, 1: 是>", PLUGIN_FLAG, true, 0.0, true, 1.0);
     g_cvMultiKillHint = CreateConVar("lksa_multikill_hint", "1", "是否开启连杀提示<0: 否, 1: 是>", PLUGIN_FLAG, true, 0.0, true, 1.0);
-    g_cvKillPrint = CreateConVar("lksa_kill_print", "0", "是否开启击杀播报<0: 否, 1: 是>", PLUGIN_FLAG, true, 0.0, true, 1.0);
+    g_cvKillPrint = CreateConVar("lksa_kill_print", "2", "是否开启击杀播报<0: 否, 1: 聊天栏提示, 2: 屏幕正下方提示>", PLUGIN_FLAG, true, 0.0, true, 2.0);
     g_cvMultiKillTime = CreateConVar("lksa_multikill_time", "10.0", "保持连杀最长间隔时间", PLUGIN_FLAG, true, 0.1);
 
     GetCvars();
@@ -44,15 +44,16 @@ public void OnPluginStart(){
     g_cvKillPrint.AddChangeHook(OnConVarChanged);
     g_cvMultiKillTime.AddChangeHook(OnConVarChanged);
 
-    RegConsoleCmd("sm_kps", Cmd_KPS, "开启或关闭单独播报(仅限lksa_kill_print 0时)");
+    RegConsoleCmd("sm_kps", Cmd_KPS, "开启或关闭单独播报");
 
     HookEvent("round_start", Event_RoundStart, EventHookMode_PostNoCopy);
     HookEvent("round_end", Event_RoundEnd, EventHookMode_PostNoCopy);
     HookEvent("player_death", Event_PlayerDeath, EventHookMode_Pre);
-    HookEvent("jockey_ride", Event_InterruptCombo, EventHookMode_Post);
-    HookEvent("lunge_pounce", Event_InterruptCombo, EventHookMode_Post);
-    HookEvent("charger_carry_start", Event_InterruptCombo, EventHookMode_Post);
-    HookEvent("tongue_grab", Event_InterruptCombo, EventHookMode_Post);
+    // HookEvent("jockey_ride", Event_InterruptCombo, EventHookMode_Post);
+    // HookEvent("lunge_pounce", Event_InterruptCombo, EventHookMode_Post);
+    // HookEvent("charger_carry_start", Event_InterruptCombo, EventHookMode_Post);
+    // HookEvent("tongue_grab", Event_InterruptCombo, EventHookMode_Post);
+    HookEvent("player_hurt", Event_InterruptCombo, EventHookMode_Post);
 
     PrecacheSound(SOUND_HEADSHOT, false);
     PrecacheSound(SOUND_HEADSHOT_B, false);
@@ -60,7 +61,7 @@ public void OnPluginStart(){
     PrecacheSound(SOUND_FINALLBONUS, false);
 
     for(int i = 1; i <= MaxClients; i++){
-        g_bKPSingle[i] = false;
+        g_bKPSingle[i] = true;
     }
 }
 
@@ -74,7 +75,7 @@ void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue
 void GetCvars(){
     g_bKillSound = g_cvKillSound.BoolValue;
     g_bMultiKillHint = g_cvMultiKillHint.BoolValue;
-    g_bKillPrint = g_cvKillPrint.BoolValue;
+    g_iKillPrint = g_cvKillPrint.IntValue;
     g_fMultiKillTime = g_cvMultiKillTime.FloatValue;
 }
 
@@ -83,6 +84,8 @@ void GetCvars(){
 //================================================================================
 public void OnMapStart(){
     ResetPlugin();
+    if(g_iKillPrint != 0)
+        CreateTimer(600.0, Timer_CmdKPSHint, _, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public void OnMapEnd(){
@@ -93,7 +96,7 @@ public void OnMapEnd(){
 //=                             Cmd
 //================================================================================
 Action Cmd_KPS(int client, int args){
-    if(g_bKillPrint)
+    if(g_iKillPrint == 0)
         return Plugin_Handled;
     g_bKPSingle[client] = !g_bKPSingle[client];
     ReplyToCommand(client, "已%s击杀播报", g_bKPSingle[client] ? "开启" : "关闭");
@@ -122,8 +125,12 @@ void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast){
     bool bHeadShot = event.GetBool("headshot");
     g_iKillSI[attacker] += 1;
     //播报击杀
-    if(g_bKillPrint || g_bKPSingle[attacker])
-        PrintToChat(attacker, "击杀 %N (%d)", victim, g_iKillSI[attacker]);
+    if(g_bKPSingle[attacker]){
+        if(g_iKillPrint == 1)
+            PrintToChat(attacker, "击杀 %N (%d)", victim, g_iKillSI[attacker]);
+        else if(g_iKillPrint == 2)
+            PrintHintText(attacker, "击杀 %N (%d)", victim, g_iKillSI[attacker]);
+    }
 
     if(g_bKillSound || g_bMultiKillHint){
         //首次击杀
@@ -205,6 +212,11 @@ Action Timer_MKLateCheck(Handle timer, int userid){
     if(IsValidSur(client)){
         g_iMultiKill[client] = 0;
     }
+    return Plugin_Stop;
+}
+
+Action Timer_CmdKPSHint(Handle timer){
+    PrintToChatAll("\x04[TS] \x01输入\x05!kps\x01已打开或关闭击杀播报");
     return Plugin_Stop;
 }
 
