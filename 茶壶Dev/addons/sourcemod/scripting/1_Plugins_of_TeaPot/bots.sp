@@ -309,7 +309,7 @@ public void OnPluginStart() {
 
 	g_cBotLimit =				CreateConVar("bots_limit",				"4",		"开局Bot的数量", CVAR_FLAGS, true, 1.0, true, float(MaxClients));
 	g_cJoinLimit =				CreateConVar("bots_join_limit",			"-1",		"生还者玩家数量达到该值后将禁用sm_join命令和本插件的自动加入功能(不会影响游戏原有的加入功能). \n-1=插件不进行处理.", CVAR_FLAGS, true, -1.0, true, float(MaxClients));
-	g_cJoinFlags =				CreateConVar("bots_join_flags",			"0",		"额外玩家加入生还者的方法. \n0=插件不进行处理, 1=输入!join手动加入, 2=进服后插件自动加入, 3=手动+自动.", CVAR_FLAGS);
+	g_cJoinFlags =				CreateConVar("bots_join_flags",			"1",		"额外玩家加入生还者的方法. \n0=插件不进行处理, 1=输入!join手动加入, 2=进服后插件自动加入, 3=手动+自动.", CVAR_FLAGS);
 	g_cJoinRespawn =			CreateConVar("bots_join_respawn",		"0",		"玩家加入生还者时如果没有存活的Bot可以接管是否复活. \n0=否, 1=是, -1=总是复活(该值为-1时将允许玩家通过切换队伍/退出重进刷复活).", CVAR_FLAGS);
 	g_cSpecNotify =				CreateConVar("bots_spec_notify",		"0",		"完全旁观玩家点击鼠标左键时, 提示加入生还者的方式 \n0=不提示, 1=聊天栏, 2=屏幕中央, 3=弹出菜单.", CVAR_FLAGS);
 	g_eWeapon[0].Flags =		CreateConVar("bots_give_slot0",			"0",		"随机主武器(数字相加). \n\
@@ -374,6 +374,7 @@ public void OnPluginStart() {
 	HookEvent("player_bot_replace",		Event_PlayerBotReplace);
 	HookEvent("bot_player_replace",		Event_BotPlayerReplace);
 	HookEvent("finale_vehicle_leaving",	Event_FinaleVehicleLeaving);
+	HookEvent("player_disconnect",      Event_PlayerDisconnect, EventHookMode_Pre);
 
 	if (g_bLateLoad)
 		g_bRoundStart = !OnEndScenario();
@@ -819,9 +820,29 @@ bool IsNullSlot(int slot) {
 	return !g_eWeapon[slot].Count;
 }
 
-public void OnClientDisconnect(int client) {
-	if (IsFakeClient(client))
+// public void OnClientDisconnect(int client) {
+// 	if (IsFakeClient(client))
+// 		return;
+
+// 	g_ePlayer[client].AuthId[0] = '\0';
+
+// 	if (g_bRoundStart) {
+// 		delete g_hBotsTimer;
+// 		g_hBotsTimer = CreateTimer(1.0, tmrBotsUpdate);
+// 	}
+// }
+
+void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast) {
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	if (client == 0 || IsFakeClient(client))
 		return;
+
+	char reason[128];
+	event.GetString("reason", reason, sizeof reason);
+	//PrintToChatAll("[Test] %s", reason);
+	if (strcmp(reason, "Disconnect by user.", false) != 0 || StrContains(reason, "kick") != -1) {
+		g_smSteamIDs.SetValue(g_ePlayer[client].AuthId, true, true);
+	}
 
 	g_ePlayer[client].AuthId[0] = '\0';
 
