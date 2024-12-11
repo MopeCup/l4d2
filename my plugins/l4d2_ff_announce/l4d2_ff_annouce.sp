@@ -7,7 +7,7 @@
 #include <left4dhooks>
 
 //常量定义
-#define VERSION "1.0.1"
+#define VERSION "1.1.0"
 //#define CVAR_FLAG FCVAR_SPONLY|FCVAR_NOTIFY
 #define VERSUS 2
 
@@ -19,10 +19,12 @@ public Plugin myinfo = {
 	version = "VERSION",
 };
 
+ConVar g_cvEndPrintTeam;
+
 int g_iGameMode;
 
 //bool g_bLateLoad;
-bool g_bFFTimer[MAXPLAYERS + 1];
+bool g_bFFTimer[MAXPLAYERS + 1], g_bPrintCD;
 
 Handle g_hFFTimer[MAXPLAYERS + 1];
 
@@ -51,6 +53,8 @@ enum struct esData{
 }
 
 public void OnPluginStart(){
+    g_cvEndPrintTeam = CreateConVar("l4d2_fa_end_print_to_team", "1", "结束时，友伤播报是否在不同队伍显示不同内容<0: 播报相同内容, 1: 播报不同内容(生还者只会看到与自己相关的数据)>");
+
     HookEvent("round_end", Event_RoundEnd, EventHookMode_PostNoCopy);
     HookEvent("map_transition", Event_MapTransition);
     HookEvent("player_hurt", Event_PlayerHurt);
@@ -78,6 +82,8 @@ public void OnMapEnd(){
 void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast){
     PrintFFReport();
     OnMapEnd();
+    g_bPrintCD = true;
+    CreateTimer(5.0, Timer_PrintCD);
 }
 
 void Event_MapTransition(Event event, const char[] name, bool dontBroadcast){
@@ -126,6 +132,11 @@ void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast){
 //=====================================================================================
 //=                                 执行播报
 //=====================================================================================
+Action Timer_PrintCD(Handle timer){
+    g_bPrintCD = false;
+    return Plugin_Stop;
+}
+
 //立刻播报
 Action FFAnnounce(Handle timer, Handle pack){
     char sVictim[32], sAttacker[32];
@@ -168,6 +179,8 @@ Action FFAnnounce(Handle timer, Handle pack){
 
 //结束播报
 void PrintFFReport(){
+    if(g_bPrintCD)
+        return;
     g_iGameMode = L4D_GetGameModeType();
     int count;
 	int client;
@@ -189,78 +202,78 @@ void PrintFFReport(){
     int dmgMake_T;
     int dmgFFGet;
     int dmgFFMake;
-
-    for(i = 0; i < infoMax; i++){
-        //按照友伤受到进行排行
-        client = clients[i];
-        //每位玩家按受到队友友伤大小对队友序号进行排序
-        for(j = 0; j < (infoMax - 1); j++){
-            for(k = j + 1; k < infoMax; k++){
-                int client1 = clients[j];
-                int client2 = clients[k];
-                if(g_esData[client].ffDmgGet[client1] < g_esData[client].ffDmgGet[client2]){
-                    clients[j] = client2;
-                    clients[k] = client1;
+    if(g_cvEndPrintTeam.BoolValue){
+        for(i = 0; i < infoMax; i++){
+            //按照友伤受到进行排行
+            client = clients[i];
+            //每位玩家按受到队友友伤大小对队友序号进行排序
+            for(j = 0; j < (infoMax - 1); j++){
+                for(k = j + 1; k < infoMax; k++){
+                    int client1 = clients[j];
+                    int client2 = clients[k];
+                    if(g_esData[client].ffDmgGet[client1] < g_esData[client].ffDmgGet[client2]){
+                        clients[j] = client2;
+                        clients[k] = client1;
+                    }
                 }
             }
-        }
-        dmgGet_T = g_esData[client].ffDmgGet_Total;
-        dmgMake_T = g_esData[client].ffDmgMake_Total;
-        
-        char str[12];
-        int dataSort[MAXPLAYERS + 1];
-        
-        //找到最长友伤接受字符长度
-        count = 0;
-        for(j = 0; j < infoMax; j++){
-            int client1 = clients[j];
-            dataSort[count++] = g_esData[client].ffDmgGet[client1];
-        }
-        SortIntegers(dataSort, count, Sort_Descending);
-        int dmgFFGetLen = !count ? 1 : IntToString(dataSort[0], str, sizeof str);
-
-        count = 0;
-        for(j = 0; j < infoMax; j++){
-            int client1 = clients[j];
-            dataSort[count++] = g_esData[client].ffDmgMake[client1];
-        }
-        SortIntegers(dataSort, count, Sort_Descending);
-        int dmgFFMakeLen = !count ? 1 : IntToString(dataSort[0], str, sizeof str);
-
-        int len, numSpace;
-        char buffer[254];
-
-        PrintToChat(client, "\x04友伤统计: \x01你本局共计受到友伤\x05%d\x01, 造成友伤\x05%d\x01", dmgGet_T, dmgMake_T);
-        PrintToChat(client, "\x04你与队友之间的友伤分布");
-        for(j = 0; j < infoMax; j++){
-            int client1 = clients[j];
-            if(client1 == client)
-                continue;
+            dmgGet_T = g_esData[client].ffDmgGet_Total;
+            dmgMake_T = g_esData[client].ffDmgMake_Total;
             
-            dmgFFGet = g_esData[client].ffDmgGet[client1];
-            dmgFFMake = g_esData[client].ffDmgMake[client1];
-            strcopy(buffer, sizeof buffer, "\x04[FF] \x01造成友伤: ");
-            numSpace = dmgFFGetLen - IntToString(dmgFFGet, str, sizeof str);
-            AppendSpaceChar(buffer, sizeof buffer, numSpace);
-            len = strlen(buffer);
-            Format(buffer[len], sizeof buffer - len, "\x05%s", str);
-            AppendSpaceChar(buffer, sizeof buffer, numSpace);
+            char str[12];
+            int dataSort[MAXPLAYERS + 1];
+            
+            //找到最长友伤接受字符长度
+            count = 0;
+            for(j = 0; j < infoMax; j++){
+                int client1 = clients[j];
+                dataSort[count++] = g_esData[client].ffDmgGet[client1];
+            }
+            SortIntegers(dataSort, count, Sort_Descending);
+            int dmgFFGetLen = !count ? 1 : IntToString(dataSort[0], str, sizeof str);
 
-            len = strlen(buffer);
-            strcopy(buffer[len], sizeof buffer - len, "\x01受到友伤: ");
-            numSpace = dmgFFMakeLen - IntToString(dmgFFMake, str, sizeof str);
-            AppendSpaceChar(buffer, sizeof buffer, numSpace);
-            len = strlen(buffer);
-            Format(buffer[len], sizeof buffer - len, "\x05%s", str);
-            AppendSpaceChar(buffer, sizeof buffer, numSpace);
+            count = 0;
+            for(j = 0; j < infoMax; j++){
+                int client1 = clients[j];
+                dataSort[count++] = g_esData[client].ffDmgMake[client1];
+            }
+            SortIntegers(dataSort, count, Sort_Descending);
+            int dmgFFMakeLen = !count ? 1 : IntToString(dataSort[0], str, sizeof str);
 
-            len = strlen(buffer);
-            Format(buffer[len], sizeof buffer - len, "\x01玩家: \x05%N", client1);
+            int len, numSpace;
+            char buffer[254];
 
-            PrintToChat(client, "%s", buffer);
+            PrintToChat(client, "\x04友伤统计: \x01你本局共计受到友伤\x05%d\x01, 造成友伤\x05%d\x01", dmgGet_T, dmgMake_T);
+            PrintToChat(client, "\x04你与队友之间的友伤分布");
+            for(j = 0; j < infoMax; j++){
+                int client1 = clients[j];
+                if(client1 == client)
+                    continue;
+                
+                dmgFFGet = g_esData[client].ffDmgGet[client1];
+                dmgFFMake = g_esData[client].ffDmgMake[client1];
+                strcopy(buffer, sizeof buffer, "\x04[FF] \x01造成友伤: ");
+                numSpace = dmgFFGetLen - IntToString(dmgFFGet, str, sizeof str);
+                AppendSpaceChar(buffer, sizeof buffer, numSpace);
+                len = strlen(buffer);
+                Format(buffer[len], sizeof buffer - len, "\x05%s", str);
+                AppendSpaceChar(buffer, sizeof buffer, numSpace);
+
+                len = strlen(buffer);
+                strcopy(buffer[len], sizeof buffer - len, "\x01受到友伤: ");
+                numSpace = dmgFFMakeLen - IntToString(dmgFFMake, str, sizeof str);
+                AppendSpaceChar(buffer, sizeof buffer, numSpace);
+                len = strlen(buffer);
+                Format(buffer[len], sizeof buffer - len, "\x05%s", str);
+                AppendSpaceChar(buffer, sizeof buffer, numSpace);
+
+                len = strlen(buffer);
+                Format(buffer[len], sizeof buffer - len, "\x01玩家: \x05%N", client1);
+
+                PrintToChat(client, "%s", buffer);
+            }
         }
     }
-
     //按玩家造成友伤大小排序
     for(j = 0; j < (infoMax - 1); j++){
         for(k = j + 1; k < infoMax; k++){
@@ -276,7 +289,7 @@ void PrintFFReport(){
     for(i = 1; i <= MaxClients; i++){
         if(!IsClientInGame(i))
             continue;
-        if((g_iGameMode == VERSUS && GetClientTeam(i) == 2) || (GetClientTeam(i) == 2 || (GetClientTeam(i) == 1 && IsGetBotOfIdlePlayer(i) != 0)))
+        if((g_iGameMode == VERSUS && GetClientTeam(i) == 2 && g_cvEndPrintTeam.BoolValue) || ((GetClientTeam(i) == 2 || (GetClientTeam(i) == 1 && IsGetBotOfIdlePlayer(i) != 0)) && g_cvEndPrintTeam.BoolValue))
             continue;
         
         char str[12];
