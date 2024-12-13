@@ -9,7 +9,7 @@ public Plugin myinfo =
 	name = "L4D2 Kill Special Announce",
 	author = "MopeCup",
 	description = "击杀特感提示",
-	version = "1.2.0",
+	version = "1.2.1",
 	url = ""
 }
 
@@ -53,7 +53,7 @@ public void OnPluginStart(){
     // HookEvent("lunge_pounce", Event_InterruptCombo, EventHookMode_Post);
     // HookEvent("charger_carry_start", Event_InterruptCombo, EventHookMode_Post);
     // HookEvent("tongue_grab", Event_InterruptCombo, EventHookMode_Post);
-    HookEvent("player_hurt", Event_InterruptCombo, EventHookMode_Post);
+    HookEvent("player_hurt", Event_InterruptCombo);
 
     PrecacheSound(SOUND_HEADSHOT, false);
     PrecacheSound(SOUND_HEADSHOT_B, false);
@@ -194,8 +194,8 @@ void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast){
 }
 
 void Event_InterruptCombo(Event event, const char[] name, bool dontBroadcast){
-    int attacker = GetClientOfUserId(event.GetInt("userid"));
-    int victim = GetClientOfUserId(event.GetInt("victim"));
+    int attacker = GetClientOfUserId(event.GetInt("attacker"));
+    int victim = GetClientOfUserId(event.GetInt("userid"));
     if(IsValidSI(attacker) && IsValidSur(victim)){
         if(g_iMultiKill[victim] != 0){
             KillTimer(g_hMultiKill[victim]);
