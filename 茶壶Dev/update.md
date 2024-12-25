@@ -1,4 +1,23 @@
+# 当前版本: 1.2.1
+
 # 茶壶详细更新日志
+### v1.2.2
+* <details><summary>小型更新</summary>
+
+    * 内容：
+        
+        1.  新增投票更改游戏模式
+        2.  更改了动态服名游戏模式获取方式
+
+    * 文件：
+
+        * 新增addons/sourcemod/plugins/5_S/change_game_mode.smx
+        * 改动addons/sourcemod/plugins/5_S/l4d2_dynamic_hostname.smx
+        * 新增addons/sourcemod/scripting/1_P/change_game_mode.sp
+        * 改动addons/sourcemod/scripting/1_P/l4d2_dynamic_hostname.sp
+        * 新增addons/sourcemod/config/hostname/gamemode.txt
+</details>
+
 ### v1.2.1
 * <details><summary>小型优化</summary>
 
@@ -20,6 +39,7 @@
             1. bots.sp
             2. l4d2_tankfight.sp
             3. health_return.sp
+</details>
 
 ### v1.2.0
 * <details><summary>死门更新</summary>

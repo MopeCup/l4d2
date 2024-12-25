@@ -1,0 +1,23 @@
+"ModeName"
+{
+    "coop"
+    {
+        "name" "战役"
+    }
+    "realism"
+    {
+        "name" "写实"
+    }
+    "mutation4"
+    {
+        "name" "绝境"
+    }
+    "community1"
+    {
+        "name" "特感速递"
+    }
+    "community5"
+    {
+        "name" "死门"
+    }
+}
