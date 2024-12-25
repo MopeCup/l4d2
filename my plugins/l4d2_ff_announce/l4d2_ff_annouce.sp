@@ -7,7 +7,7 @@
 #include <left4dhooks>
 
 //常量定义
-#define VERSION "1.1.0"
+#define VERSION "1.1.1"
 //#define CVAR_FLAG FCVAR_SPONLY|FCVAR_NOTIFY
 #define VERSUS 2
 
@@ -89,6 +89,8 @@ void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast){
 void Event_MapTransition(Event event, const char[] name, bool dontBroadcast){
     PrintFFReport();
     OnMapEnd();
+    g_bPrintCD = true;
+    CreateTimer(5.0, Timer_PrintCD);
 }
 
 void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast){

@@ -46,7 +46,7 @@ public Plugin myinfo =
 	name = "l4d2 TankFight",
 	author = "MopeCup",
 	description = "处理克局的各项事宜",
-	version = "1.9.2"
+	version = "1.10.0"
 };
 
 //===================================================================================
@@ -210,18 +210,14 @@ Action Timer_CheckTank_Death(Handle timer){
 Action Timer_CheckPath(Handle timer){
     if(GetCurrentTankNum() == 0)
         return Plugin_Stop;
-    
-    if(!IsInfiniteHordeActive()){
-        //PrintToChatAll("nope");
-        return Plugin_Continue;
-    }
 
     float fPath = GetCurrentMaxFlow();
     float fDisablePath = g_fTankSpawnPath + 5.0;
     if(fPath > g_fSurMaxPath && fPath <= fDisablePath){
         g_fSurMaxPath = GetCurrentMaxFlow();
         float fLastPath = fDisablePath - fPath;
-        PrintToChatAll("继续推进\x05%.1f%%\x01将生成尸潮", fLastPath);
+        if(IsInfiniteHordeActive())
+            PrintToChatAll("继续推进\x05%.1f%%\x01将生成尸潮", fLastPath);
     }
     else if(fPath > fDisablePath){
         g_bPauseTankFightHordes = false;
@@ -243,34 +239,25 @@ Action Timer_TFReSet(Handle timer){
     return Plugin_Stop;
 }
 
-Action Timer_TFCheckActive(Handle timer, int first){
-    if(!first){
-        for(int i = 1; i <= MaxClients; i++){
-            if(IsClientInGame(i) && GetClientTeam(i) == 3 && IsPlayerAlive(i) && GetEntProp(i, Prop_Send, "m_zombieClass") == 8){
-                if(GetEntProp(i, Prop_Send, "m_hasVisibleThreats") != 1){
+Action Timer_TFCheckActive(Handle timer){
+    if(L4D2_IsTankInPlay()){
+        g_fSurMaxPath = GetCurrentMaxFlow();
+        g_fTankSpawnPath = GetCurrentMaxFlow();
+        CreateTimer(1.0, Timer_CheckPath, _, TIMER_REPEAT);
+        g_bPauseTankFightHordes = true;
+        if(g_bTFHealthDebuff){
+            PrintToChatAll("Tank每丢失生还视野0.1s,将损失部分生命值");
+            for(int i = 1; i <= MaxClients; i++){
+                if(IsClientInGame(i) && GetClientTeam(i) == 3 && IsPlayerAlive(i) && GetEntProp(i, Prop_Send, "m_zombieClass") == 8){
                     if(g_hTFDebuff[i] == null){
                         g_iCount[i] = 0;
                         int userid = GetClientUserId(i);
-                        g_hTFDebuff[i] = CreateTimer(0.1, Timer_TFDebuff, userid);
+                        g_hTFDebuff[i] = CreateTimer(0.1, Timer_TFDebuff, userid, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
                     }
-                    return Plugin_Stop;
                 }
             }
         }
-        return Plugin_Continue;
-    }
-
-    for(int i = 1; i <= MaxClients; i++){
-        if(IsClientInGame(i) && GetClientTeam(i) == 3 && IsPlayerAlive(i) && GetEntProp(i, Prop_Send, "m_zombieClass") == 8){
-            if(IsActiveTank(i)){
-                if(g_hTFDebuff[i] == null){
-                    g_iCount[i] = 0;
-                    int userid = GetClientUserId(i);
-                    g_hTFDebuff[i] = CreateTimer(0.1, Timer_TFDebuff, userid);
-                }
-                return Plugin_Stop;
-            }
-        }
+        return Plugin_Stop;
     }
     return Plugin_Continue;
 }
@@ -285,9 +272,7 @@ Action Timer_TFDebuff(Handle timer, int userid){
         ReCheck(client);
         return Plugin_Stop;
     }
-    int first = 0;
-    CreateTimer(1.0, Timer_TFCheckActive, first, TIMER_FLAG_NO_MAPCHANGE|TIMER_REPEAT);
-    return Plugin_Stop;
+    return Plugin_Continue;
 }
 
 //===================================================================================
@@ -467,19 +452,11 @@ void TF_SetSpawnTime(float maxTime, float minTime){
 
 // }
 void SetTFHordesPausePre(){
-    g_fSurMaxPath = GetCurrentMaxFlow();
-    g_fTankSpawnPath = GetCurrentMaxFlow();
-    CreateTimer(1.0, Timer_CheckPath, _, TIMER_REPEAT);
-    g_bPauseTankFightHordes = true;
-    if(g_bTFHealthDebuff){
-        PrintToChatAll("Tank每丢失生还视野0.1s,将损失部分生命值");
-        int first = 1;
-        CreateTimer(1.0, Timer_TFCheckActive, first, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
-    }
+    CreateTimer(1.0, Timer_TFCheckActive, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public Action L4D_OnSpawnMob(int &amount){
-    if(g_bPauseTankFightHordes && GetCurrentTankNum() > 0 && !IsSurVomited() && IsInfiniteHordeActive()){
+    if(g_bPauseTankFightHordes && GetCurrentTankNum() > 0 && !IsSurVomited()){
         L4D2Direct_SetPendingMobCount(0);
         return Plugin_Handled;
     }
@@ -573,12 +550,12 @@ int GetGameRulesNumber(){
     return GameRules_GetProp("m_bInSecondHalfOfRound");
 }
 
-//是否为激活的坦克
-bool IsActiveTank(int client){
-    if(GetEntProp(client, Prop_Send, "m_zombieState") == 1 || GetEntProp(client, Prop_Send, "m_hasVisibleThreats") == 1)
-        return true;
-    return false;
-}
+// //是否为激活的坦克
+// bool IsActiveTank(int client){
+//     if(GetEntProp(client, Prop_Send, "m_zombieState") == 1 || GetEntProp(client, Prop_Send, "m_hasVisibleThreats") == 1)
+//         return true;
+//     return false;
+// }
 
 void ReCheck(int client){
     if(g_iCount[client] <= 10){

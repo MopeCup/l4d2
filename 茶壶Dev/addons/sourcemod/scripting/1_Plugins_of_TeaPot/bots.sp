@@ -461,13 +461,19 @@ bool JoinSurTeam(int client) {
 	if (!bot || !IsValidSurBot(bot))
 		bot = FindUselessSurBot(canRespawn);
 
-	if (!bot && !canRespawn) {
-		ChangeClientTeam(client, TEAM_SURVIVOR);
-		if (IsPlayerAlive(client))
-			State_Transition(client, 6);
+	if (!canRespawn && !bot) {
+		if (g_iJoinFlags == 1) {
+			PrintToChat(client, "\x04加入失败 \x05无可加入bot\x01");
+			return false;
+		}
+		else {
+			ChangeClientTeam(client, TEAM_SURVIVOR);
+			if (IsPlayerAlive(client))
+				State_Transition(client, 6);
 
-		PrintToChat(client, "\x05重复加入默认为 \x04死亡状态\x01.");
-		return true;
+			PrintToChat(client, "\x05重复加入默认为 \x04死亡状态\x01.");
+			return true;
+		}
 	}
 
 	bool canTake;

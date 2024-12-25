@@ -1,4 +1,26 @@
 # 茶壶详细更新日志
+### v1.2.1
+* <details><summary>小型优化</summary>
+
+    * 内容:
+
+        1.  非自动加入模式下无额外bot，旁观将不能加入生还
+        2.  更改坦克是否激活的判定为left4dhooks内的函数，使得判定更加准确
+        3.  安全屋回血后调一帧触发，以兼容其他插件
+
+    * 文件：
+        
+        *  改动 addons/sourcemod/plugins/4_G/:
+
+            1. bots.smx
+            2. l4d2_tankfight.smx
+            3. health_return.smx
+        * 改动 addons/sourcemod/scripting/1_P/
+
+            1. bots.sp
+            2. l4d2_tankfight.sp
+            3. health_return.sp
+
 ### v1.2.0
 * <details><summary>死门更新</summary>
 

@@ -11,7 +11,7 @@ public Plugin myinfo =
 	name = "Health Return",
 	author = "MopeCup",
 	description = "击杀特感回血与过关回血",
-	version = "1.0.0",
+	version = "1.0.1",
 	url = "https://github.com/MopeCup/l4d2"
 }
 
@@ -95,7 +95,8 @@ void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue
 //=                         event
 //===============================================================
 void Event_RoundStart(Event event, const char[] name, bool dontBroadcast){
-    SafeRoomNap();
+    CreateTimer(1.0, Timer_SafeRoomNap);
+    //SafeRoomNap();
 }
 
 void Event_MapTransition(Event event, const char[] name, bool dontBroadcast){
@@ -146,6 +147,11 @@ void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast){
         
         ReturnHealthToPlayer(attacker, bSkill, bMelee, bFar, bDanger, bHeadShot);
     }
+}
+
+Action Timer_SafeRoomNap(Handle timer){
+    SafeRoomNap();
+    return Plugin_Stop;
 }
 
 //===============================================================
