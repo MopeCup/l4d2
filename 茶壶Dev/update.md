@@ -1,4 +1,4 @@
-# 当前版本: 1.2.1
+# 当前版本: 1.2.2
 
 # 茶壶详细更新日志
 ### v1.2.2
@@ -8,13 +8,20 @@
         
         1.  新增投票更改游戏模式
         2.  更改了动态服名游戏模式获取方式
+        3.  slot能修改显示玩家数以及增加退出连接提示功能
 
     * 文件：
 
         * 新增addons/sourcemod/plugins/5_S/change_game_mode.smx
-        * 改动addons/sourcemod/plugins/5_S/l4d2_dynamic_hostname.smx
+        * 改动addons/sourcemod/plugins/5_S/
+        
+            1. l4d2_dynamic_hostname.smx
+            2. l4d2_teapot_commands.smx
         * 新增addons/sourcemod/scripting/1_P/change_game_mode.sp
-        * 改动addons/sourcemod/scripting/1_P/l4d2_dynamic_hostname.sp
+        * 改动addons/sourcemod/scripting/1_P/
+        
+            1. l4d2_dynamic_hostname.sp
+            2. l4d2_teapot_commands.sp
         * 新增addons/sourcemod/config/hostname/gamemode.txt
 </details>
 
