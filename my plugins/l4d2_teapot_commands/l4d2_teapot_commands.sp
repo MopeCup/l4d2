@@ -1,17 +1,20 @@
 #include <sourcemod>
 #include <left4dhooks>
 #include <l4d2_nativevote>
-#include "cup/cup_function.sp"
+#include <cup_function>
 
 #pragma semicolon 1
 #pragma newdecls required
+
+#define SOUND_QUIT "default_locked.wav"
+#define SOUND_CONNECT "door1_move.wav"
 
 public Plugin myinfo = 
 {
 	name = "l4d2 teapot commands",
 	author = "MopeCup",
 	description = "提供一系列指令",
-	version = "1.3.0",
+	version = "1.3.1",
 	url = ""
 }
 
@@ -33,6 +36,8 @@ public void OnPluginStart(){
     RegAdminCmd("sm_addcvar", Cmd_Cvar, ADMFLAG_GENERIC, "修改Cvar");
 
     AddCommandListener(Afk_Command, "go_away_from_keyboard");
+
+    HookEvent("player_disconnect",      Event_PlayerDisconnect, EventHookMode_Pre);
 }
 
 //=============================================================================
@@ -155,6 +160,7 @@ void SlotVote_Handler(L4D2NativeVote vote, VoteAction action, int param1, int pa
                 char sVal[2];
                 vote.GetInfoString(sVal, sizeof sVal);
                 ChangeServerCvar("sv_maxplayers", sVal);
+                ChangeServerCvar("sv_visiblemaxplayers", sVal);
 
                 PrintToChatAll("\x04[SlotVote] \x01已修改slot为\x05%s", sVal);
             }
@@ -173,6 +179,32 @@ Action Cmd_Lazer(int client, int args){
         return Plugin_Handled;
     CheatCommand(client, "upgrade_add", "laser_sight");
     return Plugin_Handled;
+}
+
+//=============================================================================
+//                          连接与退出
+//=============================================================================
+public void OnClientConneted(int client){
+    if(IsFakeClient(client))
+        return;
+    PrintToChatAll("\x04%N\x05正在加入游戏, 当前游戏人数(\x03%d/%s\x05)", client, GetPlayerNum() + 1, ChangePluginConVar("sv_maxplayers"));
+    for(int i = 1; i <= MaxClients; i++){
+        if(IsValidClient(i) && !IsFakeClient(i))
+            EmitSoundToClient(i, SOUND_CONNECT);
+    }
+}
+
+void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast){
+    int client = GetClientOfUserId(event.GetInt("userid"));
+    if(client == 0 || IsFakeClient(client))
+        return;
+    char reason[128];
+    event.GetString("reason", reason, sizeof reason);
+    PrintToChatAll("\x04%N\x05退出了游戏, 当前游戏人数(\x03%d/%s)\n退出原因: \x03%s", client, GetPlayerNum(), ChangePluginConVar("sv_maxplayers"), reason);
+    for(int i = 1; i <= MaxClients; i++){
+        if(IsValidClient(i) && !IsFakeClient(i))
+            EmitSoundToClient(i, SOUND_QUIT);
+    }
 }
 
 bool IsClientAndInGame(int client){
