@@ -3,6 +3,9 @@
 #include <sdkhooks>
 #include <sdktools>
 /**
+ * 2024.12.28 - v1.3.1
+ * 修复一个报错问题
+ * 
  *  2024.12.5 - v1.3.0
  *  重做并作为bots的扩展插件使用
  */
@@ -125,12 +128,16 @@ public Action TraceAttack(int victim, int &attacker, int &inflictor, float &dama
 {
 	if (!g_cSBHeadShotDmg.BoolValue)
 		return Plugin_Continue;
-	if (IsClientInGame(victim) && GetClientTeam(victim) == 3 && GetEntProp(victim, Prop_Send, "m_zombieClass") != 8 && IsClientInGame(attacker) && GetClientTeam(attacker) == 2 && IsFakeClient(attacker))
+
+	if (victim > 0 && victim <= MaxClients && attacker > 0 && attacker <= MaxClients)
 	{
-		if (hitgroup == 1)
+		if (IsClientInGame(victim) && GetClientTeam(victim) == 3 && GetEntProp(victim, Prop_Send, "m_zombieClass") != 8 && IsClientInGame(attacker) && GetClientTeam(attacker) == 2 && IsFakeClient(attacker))
 		{
-			damage = damage / 4.0;
-			return Plugin_Changed;
+			if (hitgroup == 1)
+			{
+				damage = damage / 4.0;
+				return Plugin_Changed;
+			}
 		}
 	}
 	return Plugin_Continue;

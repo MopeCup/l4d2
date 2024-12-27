@@ -9,7 +9,7 @@ public Plugin myinfo =
 	name = "L4D2 Kill Special Announce",
 	author = "MopeCup",
 	description = "击杀特感提示",
-	version = "1.2.1",
+	version = "1.2.2",
 	url = ""
 }
 
@@ -49,11 +49,13 @@ public void OnPluginStart(){
     HookEvent("round_start", Event_RoundStart, EventHookMode_PostNoCopy);
     HookEvent("round_end", Event_RoundEnd, EventHookMode_PostNoCopy);
     HookEvent("player_death", Event_PlayerDeath, EventHookMode_Pre);
-    // HookEvent("jockey_ride", Event_InterruptCombo, EventHookMode_Post);
-    // HookEvent("lunge_pounce", Event_InterruptCombo, EventHookMode_Post);
-    // HookEvent("charger_carry_start", Event_InterruptCombo, EventHookMode_Post);
-    // HookEvent("tongue_grab", Event_InterruptCombo, EventHookMode_Post);
-    HookEvent("player_hurt", Event_InterruptCombo);
+    
+    HookEvent("jockey_ride", Event_InterruptCombo, EventHookMode_Post);
+    HookEvent("lunge_pounce", Event_InterruptCombo, EventHookMode_Post);
+    HookEvent("charger_pummel_start", Event_InterruptCombo, EventHookMode_Post);
+    HookEvent("choke_start", Event_InterruptCombo, EventHookMode_Post);
+    
+    HookEvent("player_hurt", Event_InterruptCombo_Hurt);
 
     PrecacheSound(SOUND_HEADSHOT, false);
     PrecacheSound(SOUND_HEADSHOT_B, false);
@@ -124,12 +126,13 @@ void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast){
         return;
     bool bHeadShot = event.GetBool("headshot");
     g_iKillSI[attacker] += 1;
+    char killPrintWord[][] = {"击杀", "爆头击杀"};
     //播报击杀
     if(g_bKPSingle[attacker]){
         if(g_iKillPrint == 1)
-            PrintToChat(attacker, "击杀 %N (%d)", victim, g_iKillSI[attacker]);
+            PrintToChat(attacker, "%s %N (%d)", bHeadShot ? killPrintWord[1] : killPrintWord[0], victim, g_iKillSI[attacker]);
         else if(g_iKillPrint == 2)
-            PrintHintText(attacker, "击杀 %N (%d)", victim, g_iKillSI[attacker]);
+            PrintHintText(attacker, "%s %N (%d)", bHeadShot ? killPrintWord[1] : killPrintWord[0], victim, g_iKillSI[attacker]);
     }
 
     if(g_bKillSound || g_bMultiKillHint){
@@ -193,12 +196,25 @@ void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast){
     }
 }
 
-void Event_InterruptCombo(Event event, const char[] name, bool dontBroadcast){
+void Event_InterruptCombo_Hurt(Event event, const char[] name, bool dontBroadcast){
     int attacker = GetClientOfUserId(event.GetInt("attacker"));
     int victim = GetClientOfUserId(event.GetInt("userid"));
     if(IsValidSI(attacker) && IsValidSur(victim)){
         if(g_iMultiKill[victim] != 0){
-            KillTimer(g_hMultiKill[victim]);
+            if(g_hMultiKill[victim] != null)
+                KillTimer(g_hMultiKill[victim]);
+            g_iMultiKill[victim] = 0;
+        }
+    }
+}
+
+void Event_InterruptCombo(Event event, const char[] name, bool dontBroadcast){
+    int attacker = GetClientOfUserId(event.GetInt("userid"));
+    int victim = GetClientOfUserId(event.GetInt("victim"));
+    if(IsValidSI(attacker) && IsValidSur(victim)){
+        if(g_iMultiKill[victim] != 0){
+            if(g_hMultiKill[victim] != null)
+                KillTimer(g_hMultiKill[victim]);
             g_iMultiKill[victim] = 0;
         }
     }

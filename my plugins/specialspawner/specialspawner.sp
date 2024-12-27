@@ -859,7 +859,8 @@ void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast) {
 		TankStatusActoin(false);
 
 	//PrintToChatAll("%d", class);
-	WriteIntoSpawnQueque(class);
+	else
+		WriteIntoSpawnQueque(class);
 	if (class != 4 && IsFakeClient(client))
 		RequestFrame(NextFrame_KickBot, event.GetInt("userid"));
 }
