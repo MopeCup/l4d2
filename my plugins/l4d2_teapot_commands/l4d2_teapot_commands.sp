@@ -232,7 +232,7 @@ public void OnClientPutInServer(int client)
 {
 	if (IsFakeClient(client))
 		return;
-	PrintToChatAll("\x04%N\x05加入游戏, 当前游戏人数(\x03%d/%s\x05)", client, GetPlayerNum() + 1, ChangePluginConVar("sv_maxplayers"));
+	PrintToChatAll("\x04%N\x05加入游戏, 当前游戏人数(\x03%d/%s\x05)", client, GetPlayerNum(), ChangePluginConVar("sv_maxplayers"));
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		if (IsValidClient(i) && !IsFakeClient(i))
