@@ -1,6 +1,49 @@
-# 当前版本: 1.2.2
+# 仓库当前版本: 1.2.3
 
 # 茶壶详细更新日志
+### v1.2.3
+* <details><summary>小型更新与报错修复</summary>
+
+    * 内容:
+
+        1. 修复了l4d2_teapot_commands连接与退出不正常工作的问题
+        2. 修复specialspawner, bots, l4d2_kill-si_announce的报错问题
+        3. 现在受伤，被控均会中断连杀, 爆头击杀与击杀的提示做了分别
+        4. 新增投票刷新服务器
+        5. 新增投票多倍医疗
+        6. 将投票杀特回血，过关回血设置为通用投票
+        7. 修复投票提出人机不生效的问题
+
+    * 文件：
+        * 删除addons/sourcemod/plugins/disabled/[DG]l4d2_more_medicals.smx
+        * 新增addons/sourcemod/plugins/4_G/l4d2_more_medicals.smx
+        * 改动addons/sourcemod/data/
+
+            1. l4d2_config_vote.cfg
+            2. config_vote_DG.cfg
+            3. config_vote_MS.cfg
+            4. config_HT.cfg
+            5. config_vote_TR.cfg
+
+        * 改动addons/sourcemod/plugins/5_S/l4d2_teapot_commands.smx
+        * 改动addons/sourcemod/plugins/4_G/
+
+            1. bots.smx
+            2. l4d2_kill-special_announce.smx
+        * 改动addons/sourcemod/plugins/disabled/[GM]specialspawner.smx
+        * 改动addons/sourcemod/scripting/1_P/
+
+            1. l4d2_teapot_commands.sp
+            2. bot_manager.sp
+            3. specialspawner.sp
+            4. l4d2_kill-special_announce.sp
+
+        * 新增cfg/vote/serverSetting/refreshServer.cfg
+        * 新增cfg/vote/moreMedicals
+        * 改动cfg/vote/1_DG
+        * 改动cfg/vote/serverSetting/kickbots.cfg
+</details>
+
 ### v1.2.2
 * <details><summary>小型更新</summary>
 

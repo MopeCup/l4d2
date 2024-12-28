@@ -17,7 +17,7 @@ public Plugin myinfo =
 public void OnPluginStart()
 {
 	cv_MultiMedicalKits = CreateConVar("l4d2_multi_medical_kits", "1", "初始多倍医疗包", FCVAR_NOTIFY, true, 1.0);
-	cv_MultiMedicalPills = CreateConVar("l4d2_multi_medical_pills", "2", "初始多倍止痛药和肾上腺素",FCVAR_NOTIFY, true, 1.0);
+	cv_MultiMedicalPills = CreateConVar("l4d2_multi_medical_pills", "1", "初始多倍止痛药和肾上腺素",FCVAR_NOTIFY, true, 1.0);
 	i_MultiMedicalKits = GetConVarInt(cv_MultiMedicalKits);
 	i_MultiMedicalPills = GetConVarInt(cv_MultiMedicalPills);
 	HookConVarChange(cv_MultiMedicalKits, CvarKitChanged);
