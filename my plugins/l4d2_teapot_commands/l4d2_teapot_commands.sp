@@ -6,9 +6,9 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define SOUND_CONNECT "door_lock_1.wav"
-#define SOUND_JOIN	  "door1_move.wav"
-#define SOUND_QUIT	  "default_locked.wav"
+#define SOUND_CONNECT "doors/door_lock_1.wav"
+#define SOUND_JOIN	  "doors/door1_move.wav"
+#define SOUND_QUIT	  "doors/default_locked.wav"
 
 public Plugin myinfo =
 {
@@ -177,11 +177,11 @@ void SlotVote_Handler(L4D2NativeVote vote, VoteAction action, int param1, int pa
 	{
 		case VoteAction_Start:
 		{
-			PrintToChatAll("\x04[SlotVote] \x05%N\x01发起了一个投票", param1);
+			PrintToChatAll("\x04[SlotVote] \x03%N\x01发起了一个投票", param1);
 		}
 		case VoteAction_PlayerVoted:
 		{
-			PrintToChatAll("\x04[SlotVote] \x05%N\x01已投票", param1);
+			PrintToChatAll("\x04[SlotVote] \x03%N\x01已投票", param1);
 		}
 		case VoteAction_End:
 		{
@@ -193,7 +193,7 @@ void SlotVote_Handler(L4D2NativeVote vote, VoteAction action, int param1, int pa
 				ChangeServerCvar("sv_maxplayers", sVal);
 				ChangeServerCvar("sv_visiblemaxplayers", sVal);
 
-				PrintToChatAll("\x04[SlotVote] \x01已修改slot为\x05%s", sVal);
+				PrintToChatAll("\x04[SlotVote] \x01已修改slot为\x03%s", sVal);
 			}
 			else {
 				vote.SetFail();
@@ -220,7 +220,7 @@ public void OnClientConnected(int client)
 {
 	if (IsFakeClient(client))
 		return;
-	PrintToChatAll("\x04%N正在连接服务器...", client);
+	PrintToChatAll("\x03%N\x05正在连接服务器...", client);
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		if (IsValidClient(i) && !IsFakeClient(i))
@@ -232,7 +232,7 @@ public void OnClientPutInServer(int client)
 {
 	if (IsFakeClient(client))
 		return;
-	PrintToChatAll("\x04%N\x05加入游戏, 当前游戏人数(\x03%d/%s\x05)", client, GetPlayerNum(), ChangePluginConVar("sv_maxplayers"));
+	PrintToChatAll("\x03%N\x05加入游戏, 当前游戏人数(\x03%d/%s\x05)", client, GetPlayerNum(), ChangePluginConVar("sv_maxplayers"));
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		if (IsValidClient(i) && !IsFakeClient(i))
@@ -247,7 +247,7 @@ void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
 		return;
 	char reason[128];
 	event.GetString("reason", reason, sizeof reason);
-	PrintToChatAll("\x04%N\x05退出了游戏, 当前游戏人数(\x03%d/%s\x05)\n退出原因: \x03%s", client, GetPlayerNum(), ChangePluginConVar("sv_maxplayers"), reason);
+	PrintToChatAll("\x03%N\x05退出了游戏, 当前游戏人数(\x03%d/%s\x05)\n退出原因: \x03%s", client, GetPlayerNum() - 1, ChangePluginConVar("sv_maxplayers"), reason);
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		if (IsValidClient(i) && !IsFakeClient(i))
