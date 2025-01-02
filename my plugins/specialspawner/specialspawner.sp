@@ -62,7 +62,8 @@ ConVar
 	g_cFirstSpawnTime,
 	g_cSpawnRange,
 	g_cDiscardRange,
-	g_cSafeSpawnRange;
+	g_cSafeSpawnRange,
+	g_cSpawnForm;
 
 float
 	g_fSpawnTimeMin,
@@ -169,12 +170,12 @@ public void OnPluginStart() {
 	g_cSpawnLimits[SI_CHARGER] = 	CreateConVar("ss_charger_limit",		"1",						"同时存在的最大charger数量", _, true, 0.0, true, 32.0);
 
 	g_cSpawnWeights[SI_SMOKER] =	CreateConVar("ss_smoker_weight",		"100",						"smoker产生比重", _, true, 0.0);
-	g_cSpawnWeights[SI_BOOMER] =	CreateConVar("ss_boomer_weight",		"100",						"boomer产生比重", _, true, 0.0);
+	g_cSpawnWeights[SI_BOOMER] =	CreateConVar("ss_boomer_weight",		"50",						"boomer产生比重", _, true, 0.0);
 	g_cSpawnWeights[SI_HUNTER] =	CreateConVar("ss_hunter_weight",		"100",						"hunter产生比重", _, true, 0.0);
-	g_cSpawnWeights[SI_SPITTER] =	CreateConVar("ss_spitter_weight",		"100",						"spitter产生比重", _, true, 0.0);
+	g_cSpawnWeights[SI_SPITTER] =	CreateConVar("ss_spitter_weight",		"50",						"spitter产生比重", _, true, 0.0);
 	g_cSpawnWeights[SI_JOCKEY] =	CreateConVar("ss_jockey_weight",		"100",						"jockey产生比重", _, true, 0.0);
 	g_cSpawnWeights[SI_CHARGER] =	CreateConVar("ss_charger_weight",		"100",						"charger产生比重", _, true, 0.0);
-	g_cScaleWeights =				CreateConVar("ss_scale_weights",		"0",						"缩放相应特感的产生比重 [0 = 关闭 | 1 = 开启](开启后,总比重越大的越容易先刷出来, 动态控制特感刷出顺序)", _, true, 0.0, true, 1.0);
+	g_cScaleWeights =				CreateConVar("ss_scale_weights",		"1",						"缩放相应特感的产生比重 [0 = 关闭 | 1 = 开启](开启后,总比重越大的越容易先刷出来, 动态控制特感刷出顺序)", _, true, 0.0, true, 1.0);
 	g_cSpawnTimeMin =				CreateConVar("ss_time_min",				"14.1",						"特感的最小产生时间", _, true, 0.1);
 	g_cSpawnTimeMax =				CreateConVar("ss_time_max",				"15.0",						"特感的最大产生时间", _, true, 1.0);
 	g_cSpawnTimeMode =				CreateConVar("ss_time_mode",			"2",						"特感的刷新时间模式[0 = 随机 | 1 = 递增(杀的越快刷的越快) | 2 = 递减(杀的越慢刷的越快)]", _, true, 0.0, true, 2.0);
@@ -185,7 +186,7 @@ public void OnPluginStart() {
 	g_cExtraSize =					CreateConVar("ss_extra_size",			"0",						"生还者团队每增加多少玩家人一次多产生一只特感", _, true, 1.0, true, 32.0);
 	g_cTankStatusAction =			CreateConVar("ss_tankstatus_action",	"1",						"坦克产生后是否对当前刷特参数进行修改, 坦克死完后恢复?[0 = 忽略(保持原有的刷特状态) | 1 = 自定义]", _, true, 0.0, true, 1.0);
 	g_cTankStatusLimits =			CreateConVar("ss_tankstatus_limits",	"1;1;1;0;1;1",				"坦克产生后每种特感数量的自定义参数");
-	g_cTankStatusWeights =			CreateConVar("ss_tankstatus_weights",	"100;100;100;100;100;100",	"坦克产生后每种特感比重的自定义参数");
+	g_cTankStatusWeights =			CreateConVar("ss_tankstatus_weights",	"100;50;100;50;100;100",	"坦克产生后每种特感比重的自定义参数");
 	g_cSuicideTime =				CreateConVar("ss_suicide_time",			"25.0",						"特感自动处死时间", _, true, 1.0);
 	g_cRushDistance =				CreateConVar("ss_rush_distance",		"500.0",					"路程超过多少算跑图(最前面的玩家路程减去最后面的玩家路程, 忽略倒地玩家)", _, true, 0.0);
 
@@ -193,6 +194,7 @@ public void OnPluginStart() {
 	g_cSpawnRangeMax =				CreateConVar("ss_spawnrange_max",		"1500.0",					"特感最大生成距离", _, true, 0.0);
 
 	g_cFirstSpawnTime = 			CreateConVar("ss_first_time",			"10.0",						"玩家离开安全区域后第一波特感的刷新时间", _, true, 0.0);
+	g_cSpawnForm = 					CreateConVar("ss_spawn_form", 			"0", 						"遵从什么刷怪规则[0: 轮换刷特, 1: 概率刷特]", _, true, 0.0, true, 1.0);
 
 	g_cSpawnRange =					FindConVar("z_spawn_range");
 	g_cDiscardRange =				FindConVar("z_discard_range");
@@ -859,7 +861,7 @@ void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast) {
 		TankStatusActoin(false);
 
 	//PrintToChatAll("%d", class);
-	else
+	else if (!g_cSpawnForm.BoolValue)
 		WriteIntoSpawnQueque(class);
 	if (class != 4 && IsFakeClient(client))
 		RequestFrame(NextFrame_KickBot, event.GetInt("userid"));
@@ -1026,7 +1028,10 @@ void ExecuteSpawnQueue(int totalSI, bool retry, int index = -1) {
 		spawnSize = g_iSpawnSize > allowedSI ? allowedSI : g_iSpawnSize;
 		GetSITypeCount();
 		for (; i < spawnSize; i++) {
-			index = GenerateIndex();
+			if (!g_cSpawnForm.BoolValue)
+				index = GenerateIndex();
+			else
+				index = GenerateIndexRandomly();
 			if (index == -1)
 				break;
 
@@ -1174,40 +1179,40 @@ void GetSITypeCount() {
 	}
 }
 
-////决定特感生成的种类的函数
-// int GenerateIndex() {	
-// 	static int i;
-// 	static int totalWeight;
-// 	static int standardizedWeight;
-// 	static int tempWeights[SI_MAX_SIZE];
-// 	static float unit;
-// 	static float random;
-// 	static float intervalEnds[SI_MAX_SIZE];
+//决定特感生成的种类的函数
+int GenerateIndexRandomly() {	
+	static int i;
+	static int totalWeight;
+	static int standardizedWeight;
+	static int tempWeights[SI_MAX_SIZE];
+	static float unit;
+	static float random;
+	static float intervalEnds[SI_MAX_SIZE];
 
-// 	totalWeight = 0;
-// 	standardizedWeight = 0;
+	totalWeight = 0;
+	standardizedWeight = 0;
 
-// 	for (i = 0; i < SI_MAX_SIZE; i++) {
-// 		tempWeights[i] = g_iSpawnCounts[i] < g_iSpawnLimits[i] ? (g_bScaleWeights ? ((g_iSpawnLimits[i] - g_iSpawnCounts[i]) * g_iSpawnWeights[i]) : g_iSpawnWeights[i]) : 0;
-// 		totalWeight += tempWeights[i];
-// 	}
+	for (i = 0; i < SI_MAX_SIZE; i++) {
+		tempWeights[i] = g_iSpawnCounts[i] < g_iSpawnLimits[i] ? (g_bScaleWeights ? ((g_iSpawnLimits[i] - g_iSpawnCounts[i]) * g_iSpawnWeights[i]) : g_iSpawnWeights[i]) : 0;
+		totalWeight += tempWeights[i];
+	}
 
-// 	unit = 1.0 / totalWeight;
-// 	for (i = 0; i < SI_MAX_SIZE; i++) {
-// 		if (tempWeights[i] >= 0) {
-// 			standardizedWeight += tempWeights[i];
-// 			intervalEnds[i] = standardizedWeight * unit;
-// 		}
-// 	}
+	unit = 1.0 / totalWeight;
+	for (i = 0; i < SI_MAX_SIZE; i++) {
+		if (tempWeights[i] >= 0) {
+			standardizedWeight += tempWeights[i];
+			intervalEnds[i] = standardizedWeight * unit;
+		}
+	}
 
-// 	random = Math_GetRandomFloat(0.0, 1.0);
-// 	for (i = 0; i < SI_MAX_SIZE; i++) {
-// 		if (tempWeights[i] > 0 && intervalEnds[i] >= random)
-// 			return i;
-// 	}
+	random = Math_GetRandomFloat(0.0, 1.0);
+	for (i = 0; i < SI_MAX_SIZE; i++) {
+		if (tempWeights[i] > 0 && intervalEnds[i] >= random)
+			return i;
+	}
 
-// 	return -1;
-// }
+	return -1;
+}
 
 //改为调用外部文件决定特感种类生成
 #include "ss_class_changer.sp"
