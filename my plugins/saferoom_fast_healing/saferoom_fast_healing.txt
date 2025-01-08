@@ -1,0 +1,79 @@
+"Games"
+{
+	"#default"
+	{
+		"Functions"
+		{
+			"CTerrorPlayer::StartHealing"
+			{
+				"signature"		"CTerrorPlayer::StartHealing"
+				"callconv"		"thiscall"
+				"return"		"int"
+				"this"			"entity"
+				"arguments"
+				{
+					"target"	// Client being healed
+					{
+						"type"	"cbaseentity"
+					}
+				}
+			}
+			"CFirstAidKit::ShouldStartAction"
+			{
+				"signature"		"CFirstAidKit::ShouldStartAction"
+				"callconv"		"thiscall"
+				"return"		"int"
+				"this"			"ignore"
+				"arguments"
+				{
+					"actionType"
+					{
+						"type"	"int"
+					}
+					"client"
+					{
+						"type"	"cbaseentity"
+					}
+					"target"
+					{
+						"type"	"cbaseentity"
+					}
+				}
+			}
+		}
+	}
+	"left4dead2"
+	{
+		"Signatures"
+		{
+			/*
+			 *	CFirstAidKit::ShouldStartAction(CBaseBackpackItem::BackpackItemActionType,CTerrorPlayer *,CBaseEntity *)
+			 */
+			"CFirstAidKit::ShouldStartAction"
+			{
+				"library"	"server"
+				"linux"		"@_ZN12CFirstAidKit17ShouldStartActionEN17CBaseBackpackItem22BackpackItemActionTypeEP13CTerrorPlayerP11CBaseEntity"
+				"windows"	"\x2A\x2A\x2A\x2A\x2A\x2A\x2A\x8B\x2A\x8B\x90\x2A\x2A\x2A\x2A\x57\x8B\x2A\x8B\x2A\xFF\x2A\x84\x2A\x75\x2A\x5F"
+				/* ? ? ? ? ? ? ? 8B ? 8B 90 ? ? ? ? 57 8B ? 8B ? FF ? 84 ? 75 ? 5F */
+				/* Search: https://github.com/Psykotikism/L4D1-2_Signatures/blob/main/l4d2/gamedata/l4d2_signatures.txt#L1630 */
+			}
+		}	
+	}
+	"left4dead"
+	{
+		"Signatures"
+		{
+			/*
+			 *	CTerrorPlayer::StartHealing(CTerrorPlayer*)
+			 */
+			"CTerrorPlayer::StartHealing"
+			{
+				"library"	"server"
+				"linux"		"@_ZN13CTerrorPlayer12StartHealingEPS_"
+				"windows"	"\x83\x2A\x2A\x55\x8B\x2A\x2A\x2A\x85\x2A\x56\x8B\x2A\x0F"
+				/* 83 ? ? 55 8B ? ? ? 85 ? 56 8B ? 0F */
+				/* Search: aHealingFriend or aHealingSelf */
+			}
+		}
+	}
+}

@@ -247,7 +247,10 @@ void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
 		return;
 	char reason[128];
 	event.GetString("reason", reason, sizeof reason);
-	PrintToChatAll("\x03%N\x05退出了游戏, 当前游戏人数(\x03%d/%s\x05)\n退出原因: \x03%s", client, GetPlayerNum() - 1, ChangePluginConVar("sv_maxplayers"), reason);
+	if (IsClientInGame(client))
+		PrintToChatAll("\x03%N\x05退出了游戏, 当前游戏人数(\x03%d/%s\x05)\n退出原因: \x03%s", client, GetPlayerNum() - 1, ChangePluginConVar("sv_maxplayers"), reason);
+	else
+		PrintToChatAll("\x03%N\x05退出了游戏, 当前游戏人数(\x03%d/%s\x05)\n退出原因: \x03%s", client, GetPlayerNum(), ChangePluginConVar("sv_maxplayers"), reason);
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		if (IsValidClient(i) && !IsFakeClient(i))
