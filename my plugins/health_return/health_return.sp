@@ -11,7 +11,7 @@ public Plugin myinfo =
 	name		= "Health Return",
 	author		= "MopeCup",
 	description = "击杀特感回血与过关回血",
-	version		= "1.0.6",
+	version		= "1.0.7",
 	url			= "https://github.com/MopeCup/l4d2"
 
 }
@@ -204,10 +204,10 @@ void HealClient(int client)
 		// int iMaxHealth = GetEntProp(client, Prop_Data, "m_iMaxHealth");
 		int	  realHealth = GetEntProp(client, Prop_Data, "m_iHealth");
 		float fakeHealth = GetEntPropFloat(client, Prop_Send, "m_healthBuffer");
-		// if(GetEntProp(client, Prop_Send, "m_isIncapacitated") == 0 || GetEntProp(client, Prop_Send, "m_isHangingFromLedge") != 1)
-		//     fakeHealth = GetEntPropFloat(client, Prop_Send, "m_healthBuffer");
-		// else
-		//     fakeHealth = 0;
+		if(GetEntProp(client, Prop_Send, "m_isIncapacitated") == 0 || GetEntProp(client, Prop_Send, "m_isHangingFromLedge") != 1)
+		    fakeHealth = GetEntPropFloat(client, Prop_Send, "m_healthBuffer");
+		else
+		    fakeHealth = 0.0;
 		float allHealth	 = float(realHealth) + fakeHealth;
 		//解除倒地状态与黑白
 		CheatCommand(client, "give", "health");

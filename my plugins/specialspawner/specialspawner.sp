@@ -95,6 +95,7 @@ int
 	g_iSpawnTimeMode,
 	g_iTankStatusAction,
 	g_iSILimitCache = -1,
+	g_iSISpawnQueque[32],
 	g_iSpawnLimitsCache[SI_MAX_SIZE] = {	
 		-1,
 		-1,
@@ -139,6 +140,8 @@ bool
 	g_bScaleWeights,
 	g_bLeftSafeArea,
 	g_bFinaleStarted;
+
+ArrayList g_aSIDeath;
 
 public Plugin myinfo = {
 	name = "Special Spawner",
@@ -862,7 +865,7 @@ void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast) {
 
 	//PrintToChatAll("%d", class);
 	else if (!g_cSpawnForm.BoolValue)
-		WriteIntoSpawnQueque(class);
+		g_aSIDeath.Push(class);
 	if (class != 4 && IsFakeClient(client))
 		RequestFrame(NextFrame_KickBot, event.GetInt("userid"));
 }
@@ -1027,11 +1030,15 @@ void ExecuteSpawnQueue(int totalSI, bool retry, int index = -1) {
 		int allowedSI = g_iSILimit - totalSI;
 		spawnSize = g_iSpawnSize > allowedSI ? allowedSI : g_iSpawnSize;
 		GetSITypeCount();
+		if (!g_cSpawnForm.BoolValue)
+			GenerateIndex(spawnSize);
 		for (; i < spawnSize; i++) {
-			if (!g_cSpawnForm.BoolValue)
-				index = GenerateIndex();
-			else
+			if (g_cSpawnForm.BoolValue)
 				index = GenerateIndexRandomly();
+			else {
+				index = g_iSISpawnQueque[i];
+				g_iSISpawnQueque[i] = -1;
+			}
 			if (index == -1)
 				break;
 
