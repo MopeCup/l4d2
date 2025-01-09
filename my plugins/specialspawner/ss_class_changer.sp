@@ -10,7 +10,7 @@ void GenerateIndex(int spawnSize) {
     // for (int i = 0; i < SI_MAX_SIZE; i++) {
     //     spawnType[i] = g_iSpawnLimits[i] - g_iSpawnCounts[i];
     // } 
-    for (int i = len - 1, num = count - spawnSize; num > 0; i--, num--) {
+    for (int i = len - 1, num = count - spawnSize; num > 0 && i >= 0; i--, num--) {
         int class = g_aSIDeath.Get(i) - 1;
         spawnType[class]++;
     }
