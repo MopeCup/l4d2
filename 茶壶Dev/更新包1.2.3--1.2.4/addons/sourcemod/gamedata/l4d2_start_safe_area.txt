@@ -1,0 +1,29 @@
+"Games"
+{
+	"left4dead2"
+	{
+		"Functions"
+		{
+			"CheckForSurvivorsLeavingSafeArea"
+			{
+				"signature"		"CDirector::CheckForSurvivorsLeavingSafeArea"
+				"callconv"		"thiscall"
+				"return"		"int"
+				"this"			"ignore"
+			}
+		}
+
+		"Signatures"
+		{
+
+			/* 怎么找win签名:(How To Find Win Signature:)
+               搜字符串"player_left_safe_area"可以得到一个函数A，这个函数A有3条被引用的信息，其中两条引用函数内有字符串，最后一条引用函数内没有任何字符串，那么就是这最后一个函数*/
+			"CDirector::CheckForSurvivorsLeavingSafeArea"
+			{
+				"library"	"server"
+				"linux"		"@_ZN9CDirector32CheckForSurvivorsLeavingSafeAreaEv"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x30\x53\x56\x8B\xF1\x33\xDB"
+			}
+		}
+	}
+}

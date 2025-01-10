@@ -1,96 +1,40 @@
-int g_iSISpawnQueque[32];
+static int g_iSIQuequeType[6] = {2, 4, 5, 0, 1, 3}; 
 
-//取出一位待位特感
-int GenerateIndex() {
-    int sIClass = g_iSISpawnQueque[0];
-    ArrayMoveForward();
-    return sIClass;
-}
-
-void ArrayMoveForward() {
-    for (int i = 0; i < 32; i++) {
-        if (i != 31) {
-            g_iSISpawnQueque[i] = g_iSISpawnQueque[i+1];
-        }
-        else {
-            g_iSISpawnQueque[31] = -1;
-        }
-    }
-}
-
-//将一只死亡特感写入待位特感
-void WriteIntoSpawnQueque(int class){
-    class = class - 1;
-    int quequeClass[SI_MAX_SIZE];
-    GetSITypeCount();
+//生成特感队列
+void GenerateIndex(int spawnSize) {
+    int len = g_aSIDeath.Length;
+    int spawnType[SI_MAX_SIZE];
+    int surNum = 0;
+    int count = 0;
     for (int i = 0; i < SI_MAX_SIZE; i++) {
-        quequeClass[i] = CheckQueque(i);
-        int num = quequeClass[i] + g_iSpawnCounts[i] - g_iSpawnLimits[i];
-        if (i == class)
-            num++;
-        //如果没有变动，不进行修正
-        if (num == 0)
-            continue;
-        //存在多余特感
-        else if (num > 0) {
-            ModifiedArray(num, i);
-        }
-        else if (num < 0) {
-            ModifiedArray(num, i);
-        }
-        quequeClass[i] = CheckQueque(i);
+        count += g_iSpawnLimits[i];
     }
-    //写入
-    if (quequeClass[class] + 1 <= g_iSpawnLimits[class]) {
-        for (int i = 0; i < 32; i++) {
-            if (g_iSISpawnQueque[i] == -1) {
+    for (int i = 1; i <= MaxClients; i++) {
+        if (IsClientInGame(i) && GetClientTeam(i) == 2)
+            surNum++;
+    }
+    int maxSpawnSize = surNum > 4 ? g_cBaseSize.IntValue + (surNum - 4) * g_cExtraSize.IntValue : g_cSpawnSize.IntValue;
+    //初次生成+卡特初始化
+    if (maxSpawnSize == spawnSize && len == 0) {
+        InitSISpawnQueque();
+        return;
+    }
+    for (int i = len - 1, num = count - maxSpawnSize; num > 0 && i >= 0; i--, num--) {
+        int class = g_aSIDeath.Get(i) - 1;
+        spawnType[class]++;
+    }
+    GetSITypeCount();
+    for (int i = 0; i < spawnSize; i++) {
+        for (int j = 0; j < SI_MAX_SIZE; j++) {
+            int class = g_iSIQuequeType[j];
+            if (g_iSpawnLimits[class] - g_iSpawnCounts[class] - spawnType[class] > 0) {
                 g_iSISpawnQueque[i] = class;
+                spawnType[class]++;
                 break;
             }
         }
     }
-}
-
-//计算待位特感每种特感的数量
-int CheckQueque(int class){
-    int count = 0;
-    for (int i = 0; i < 32; i++) {
-        if (g_iSISpawnQueque[i] == class)
-            count++;
-    }
-    return count;
-}
-
-//修正待位特感的种类
-void ModifiedArray(int num, int class){
-    //清除不需要的特感
-    for (int i = 31; i >= 0; i--) {
-        //特感数大于设定数
-        if (g_iSISpawnQueque[i] == class && num > 0) {
-            g_iSISpawnQueque[i] = -1;
-            num--;
-        }
-        //特感数小于设定数
-        if (g_iSISpawnQueque[i] == -1 && num < 0) {
-            g_iSISpawnQueque[i] = class;
-            num++;
-        }
-    }
-    //如果有0在中间把特感往前移动一位填补
-    for (int i = 0; i < 32; i++) {
-        if (g_iSISpawnQueque[i] != -1)
-            continue;
-        for (int j = i + 1; j < 32; j++) {
-            if (g_iSISpawnQueque[j] == -1)
-                continue;
-            g_iSISpawnQueque[i] = g_iSISpawnQueque[j];
-            g_iSISpawnQueque[j] = -1;
-            break;
-        }
-        //说明后面没有特感存入
-        if (g_iSISpawnQueque[i] == -1)
-            break;
-    }
+    g_aSIDeath.Clear();
 }
 
 void InitSISpawnQueque() {
