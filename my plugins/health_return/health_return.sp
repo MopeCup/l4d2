@@ -11,7 +11,7 @@ public Plugin myinfo =
 	name		= "Health Return",
 	author		= "MopeCup",
 	description = "击杀特感回血与过关回血",
-	version		= "1.0.7",
+	version		= "1.0.8",
 	url			= "https://github.com/MopeCup/l4d2"
 
 }
@@ -100,11 +100,6 @@ void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue
 	GetCvars();
 }
 
-public void OnClientPutInServer(int client)
-{
-	if (IsValidSur(client) && !g_bLeftSafeArea)
-		SafeRoomNap(client);
-}
 //===============================================================
 //=                         event
 //===============================================================
@@ -128,8 +123,15 @@ void Event_MapTransition(Event event, const char[] name, bool dontBroadcast)
 void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
-	if (IsZombieClassSI(client))
+	if (IsZombieClassSI(client)) 
+	{
 		g_bIsSkillKill[client] = false;
+		return;
+	}
+	if (IsValidSur(client) && !g_bLeftSafeArea)
+	{
+		SafeRoomNap(client);
+	}
 }
 
 void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
