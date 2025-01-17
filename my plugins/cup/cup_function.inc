@@ -6,23 +6,31 @@
 //团队
 enum {
     TEAM_SPEC = 1,
-    TEAM_SUR,
-    TEAM_SI
+    TEAM_SUR = 2,
+    TEAM_SI = 3
 }
 
 //特感类型
 enum {
     ZC_SMOKER = 1,
-    ZC_BOOMER,
-    ZC_HUNTER,
-    ZC_SPITTER,
-    ZC_JOCKEY,
-    ZC_CHARGER,
-    ZC_WITCH,
-    ZC_TANK
+    ZC_BOOMER = 2,
+    ZC_HUNTER = 3,
+    ZC_SPITTER = 4,
+    ZC_JOCKEY = 5,
+    ZC_CHARGER = 6,
+    ZC_WITCH = 7,
+    ZC_TANK = 8
 }
 
-stock const char SpecialInfectedName[][] = {
+enum {
+    SUR_STATE_NORMAL = 0,
+    SUR_STATE_PINNED = 1,
+    SUR_STATE_HANGING = 2,
+    SUR_STATE_INCAPPED = 3,
+    SUR_STATE_DEAD = 4
+}
+
+stock const char specialInfectedName[][] = {
     "nope",
     "smoker",
     "boomer",
@@ -32,6 +40,14 @@ stock const char SpecialInfectedName[][] = {
     "charger",
     "witch",
     "tank"
+};
+
+stock const char surviviorState[][] = {
+    "正常",
+    "被控",
+    "挂边",
+    "倒地",
+    "死亡"
 };
 
 //==============================================================
@@ -158,9 +174,33 @@ stock int GetSIPinClient(int client, int class){
  */
 stock bool IsSurHanging(int client){
     if(IsValidSur(client) && IsPlayerAlive(client)){
-        return view_as<bool>(GetEntProp(client, Prop_Send, "m_isHangingFromLedge", 1) || view_as<bool>(GetEntProp(client, Prop_Send, "m_isFallingFromLedge", 1)));
+        return view_as<bool>(GetEntProp(client, Prop_Send, "m_isHangingFromLedge", 1)) || view_as<bool>(GetEntProp(client, Prop_Send, "m_isFallingFromLedge", 1));
     }
     return false;
+}
+
+/**
+ * 获取生还当前状态
+ * 
+ * @param client    生还索引
+ * @@return         生还状态,非法生还返回-1
+ */
+stock int GetSurState(int client){
+    if(!IsValidSur(client))
+        return -1;
+    if(!IsPlayerAlive(client))
+        return SUR_STATE_DEAD;
+    if(GetEntPropEnt(client, Prop_Send, "m_tongueOwner") != 0 ||
+	GetEntPropEnt(client, Prop_Send, "m_pounceAttacker") != 0 ||
+	GetEntPropEnt(client, Prop_Send, "m_jockeyAttacker") != 0 ||
+	GetEntPropEnt(client, Prop_Send, "m_carryAttacker") != 0 ||
+	GetEntPropEnt(client, Prop_Send, "m_pummelAttacker") != 0)
+        return SUR_STATE_PINNED;
+    if(IsSurHanging(client))
+        return SUR_STATE_HANGING;
+    if(IsSurIncapped(client))
+        return SUR_STATE_INCAPPED;
+    return SUR_STATE_NORMAL;
 }
 
 //-----Special Infected-----
