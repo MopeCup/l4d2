@@ -228,12 +228,12 @@ Action Timer_MKLateCheck(Handle timer, int userid){
     if(IsValidSur(client)){
         g_iMultiKill[client] = 0;
     }
-    return Plugin_Stop;
+    return Plugin_Continue;
 }
 
 Action Timer_CmdKPSHint(Handle timer){
     PrintToChatAll("\x04[TS] \x01输入\x05!kps\x01已打开或关闭击杀播报");
-    return Plugin_Stop;
+    return Plugin_Continue;
 }
 
 //================================================================================
