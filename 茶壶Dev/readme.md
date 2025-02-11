@@ -52,9 +52,52 @@
     ```
 </details>
 
-# 仓库当前版本: 1.2.4
+# 仓库当前版本: 1.2.5
 
 # 茶壶详细更新日志
+### v1.2.5
+* <details><summary>小型优化</summary>
+
+    * 内容：
+
+        1. 新增小尸溶解插件
+        2. 当幸存者附近存在特感时将取消友伤
+        3. 修复安全屋回血对死亡玩家不生效的问题
+        4. 增加配置文件夹及对应投票"快捷设置"
+        5. 修改模式训练模式的特感数量配置
+        6. 新增趣味投票/特感高亮
+
+    * 文件：
+
+        * 改动addons/sourcemod/plugins/4_G/
+
+            1. l4d_ff_manager.smx
+            2. health_return.smx
+        * 改动addons/sourcemod/scripting/1_P/
+        
+            1. l4d_ff_manager.sp
+            2. health_return.sp
+        * 新增addons/sourcemod/plugins/4_G/l4d_dissolve_infected.smx
+        * 新增addons/sourcemod/scripting/1_P/
+
+            1. l4d_dissolve_infected.sp
+            2. infected_glow.sp
+        * 改动addons/sourcemod/data/
+
+            1. l4d2_config_vote.cfg
+            2. config_vote_TR.cfg
+            3. config_vote_MS.cfg
+            4. config_vote_DG.cfg
+            5. config_HT.cfg
+        * 新增cfg/vote/
+
+            1. fastSetting
+            2. sINum/train
+            3. funVote/sIGlow_on.cfg
+            4. funVote/sIGlow_off.cfg
+        * 删除cfg/vote/sINum/sINumForTrain
+        * 新增addons/sourcemod/plugins/diabled/[FV]infected_glow.smx
+
 ### v1.2.4
 * <details><summary>多特调整</summary>
 

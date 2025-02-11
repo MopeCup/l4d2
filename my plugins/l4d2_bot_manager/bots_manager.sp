@@ -3,6 +3,9 @@
 #include <sdkhooks>
 #include <sdktools>
 /**
+ * 2025.01.17 - v1.3.2
+ * 新增指令快速接管bot
+ * 
  * 2024.12.28 - v1.3.1
  * 修复一个报错问题
  * 
@@ -48,6 +51,19 @@ Action cmdKickBots(int client, int args)
 	delete g_hBotsTimer;
 	g_hBotsTimer = CreateTimer(1.0, tmrBotsUpdate);
 	return Plugin_Handled;
+}
+
+Action cmdChangeBot(int client, int args)
+{
+	if (!client || !IsClientInGame(client) || IsFakeClient(client))
+		return Plugin_Handled;
+	if (!g_bRoundStart)
+		return Plugin_Handled;
+	if (!CheckJoinLimit() || !FindUselessSurBot(true))
+		return Plugin_Handled;
+	if (GetClientTeam(client) != 1)
+		ChangeClientTeam(client, 1);
+	ChangeBotMenu(client);
 }
 
 //=================================================================================
@@ -176,4 +192,65 @@ int CheckAlivePlayerNum()
 			iAlivePlayerNum++;
 	}
 	return iAlivePlayerNum;
+}
+
+//ChangeBot
+void ChangeBotMenu(int client)
+{
+	char info[12];
+	char dsp[64];
+	Menu botMenu = new Menu(BotMenu_Handler);
+	botMenu.SetTitle("- 选择要接管的Bot -");
+	for (int bot = 1; bot <= MaxClients; bot++)
+	{
+		if (IsClientInGame(bot) && IsFakeClient(bot))
+		{
+			char state[12];
+			if (!IsPlayerAlive(bot))
+				strcopy(state, sizeof state, "死亡");
+			else
+			{
+				switch (GetClientState)
+				{
+					case 0:
+					{
+						strcopy(state, sizeof state, "存活");
+					}
+					case 1: 
+					{
+						strcopy(state, sizeof state, "被控");
+					}
+					case 2:
+					{
+						strcopy(state, sizeof state, "挂边");
+					}
+					case 3:
+					{
+						strcopy(state, sizeof state, "倒地");
+					}
+				}
+			}
+			FormatEx(info, sizeof info, "%d", GetClientUserId(bot));
+			FormatEx(disp, sizeof disp, "%s - %s", state, g_sSurvivorNames[GetCharacter(bot)]);
+			menu.AddItem(info, disp);
+		}
+	}
+	botMenu.ExitBackButton = true;
+	botMenu.ExitButton = true;
+	botMenu.Display(client, 10);
+}
+
+int GetClientState(int client)
+{
+	if (GetEntPropEnt(client, Prop_Send, "m_tongueOwner") != 0 ||
+	GetEntPropEnt(client, Prop_Send, "m_pounceAttacker") != 0 ||
+	GetEntPropEnt(client, Prop_Send, "m_jockeyAttacker") != 0 ||
+	GetEntPropEnt(client, Prop_Send, "m_carryAttacker") != 0 ||
+	GetEntPropEnt(client, Prop_Send, "m_pummelAttacker") != 0)
+		return 1;
+	if (view_as<bool>(GetEntProp(client, Prop_Send, "m_isHangingFromLedge", 1)) || view_as<bool>(GetEntProp(client, Prop_Send, "m_isFallingFromLedge", 1)))
+		return 2;
+	if (view_as<bool>(GetEntProp(client, Prop_Send, "m_isIncapacitated")))
+		return 3;
+	return 0;
 }

@@ -182,15 +182,15 @@ Action FFAnnounce(Handle timer, Handle pack)
                         continue;
                     if (j == attacker)
                     {
-                        CPrintToChat(j, "{blue}你对{olive}%s{blue}造成{lightgreen}%d{blue}点友伤, 累计{lightgreen}%d", sVictim, dmg, dmg_Total);
+                        CPrintToChat(j, "{blue}你对{olive}%s{blue}造成{green}%d{blue}点友伤, 累计{green}%d", sVictim, dmg, dmg_Total);
                         continue;
                     }
                     if (j == i)
                     {
-                        CPrintToChat(j, "{olive}%s{blue}对你造成{lightgreen}%d{blue}点友伤, 累计{lightgreen}%d", sAttacker, dmg, dmg_Total);
+                        CPrintToChat(j, "{olive}%s{blue}对你造成{green}%d{blue}点友伤, 累计{green}%d", sAttacker, dmg, dmg_Total);
                         continue;
                     }
-                    CPrintToChat(j, "{olive}%s{blue}对{olive}%s{blue}造成{lightgreen}%d{blue}点友伤, 累计{lightgreen}%d", sAttacker, sVictim, dmg, dmg_Total);
+                    CPrintToChat(j, "{olive}%s{blue}对{olive}%s{blue}造成{green}%d{blue}点友伤, 累计{green}%d", sAttacker, sVictim, dmg, dmg_Total);
                 }
                 g_esData[attacker].ffDmgMake_Temp[i] = 0;
             }

@@ -366,6 +366,10 @@ public void OnPluginStart() {
 	RegConsoleCmd("sm_sbot",			cmdBotVote,		"投票设置开局人机");
 	RegConsoleCmd("sm_setbot", 			cmdBotVote, 	"投票设置开局人机");
 
+	RegConsoleCmd("sm_jg", 				cmdChangeBot, 	"快捷接管Bot");
+	RegConsoleCmd("sm_cb",				cmdChangeBot, 	"快捷接管Bot");
+	RegConsoleCmd("sm_changebot", 		cmdChangeBot, 	"快捷接管Bot");
+
 	HookEvent("round_end",				Event_RoundEnd,		EventHookMode_PostNoCopy);
 	HookEvent("round_start",			Event_RoundStart,	EventHookMode_PostNoCopy);
 	HookEvent("player_spawn",			Event_PlayerSpawn);
@@ -957,7 +961,7 @@ void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if (!client || !IsClientInGame(client) || GetClientTeam(client) != TEAM_SURVIVOR)
 		return;
-	if (CheckAlivePlayerNum() == 0)
+	if (CheckAlivePlayerNum() == 0 && g_bRoundStart)
 		CreateTimer(1.0, Timer_RebootGame, _, TIMER_FLAG_NO_MAPCHANGE); 
 
 	if (!IsFakeClient(client))
