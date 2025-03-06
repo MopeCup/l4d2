@@ -9,7 +9,7 @@ public Plugin myinfo =
 	name = "L4D2 Kill Special Announce",
 	author = "MopeCup",
 	description = "击杀特感提示",
-	version = "1.2.2",
+	version = "1.2.3",
 	url = ""
 }
 
@@ -21,6 +21,7 @@ public Plugin myinfo =
 #define SOUND_HEADSHOT_B "level/bell_impact.wav"
 #define SOUND_KILLSHOT "ui/littlereward.wav"
 #define SOUND_FINALLBONUS "level/scoreregular.wav"
+#define SYSMBOL_FLOWER "❀"
 
 ConVar g_cvKillSound, g_cvMultiKillHint, g_cvKillPrint, g_cvMultiKillTime;
 
@@ -130,9 +131,9 @@ void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast){
     //播报击杀
     if(g_bKPSingle[attacker]){
         if(g_iKillPrint == 1)
-            PrintToChat(attacker, "%s %N (%d)", bHeadShot ? killPrintWord[1] : killPrintWord[0], victim, g_iKillSI[attacker]);
+            PrintToChat(attacker, "%s %N 累计\x03%d", bHeadShot ? killPrintWord[1] : killPrintWord[0], victim, g_iKillSI[attacker]);
         else if(g_iKillPrint == 2)
-            PrintHintText(attacker, "%s %N (%d)", bHeadShot ? killPrintWord[1] : killPrintWord[0], victim, g_iKillSI[attacker]);
+            PrintHintText(attacker, "%s %s %N 累计%d %s", SYSMBOL_FLOWER, bHeadShot ? killPrintWord[1] : killPrintWord[0], victim, g_iKillSI[attacker], SYSMBOL_FLOWER);
     }
 
     if(g_bKillSound || g_bMultiKillHint){

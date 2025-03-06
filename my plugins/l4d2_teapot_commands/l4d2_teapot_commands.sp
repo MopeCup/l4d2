@@ -2,6 +2,7 @@
 #include <left4dhooks>
 #include <l4d2_nativevote>
 #include <cup_function>
+#include <multicolors>
 
 #pragma semicolon 1
 #pragma newdecls required
@@ -10,14 +11,23 @@
 #define SOUND_JOIN	  "doors/door1_move.wav"
 #define SOUND_QUIT	  "doors/default_locked.wav"
 
+int g_iRound;
+
 public Plugin myinfo =
 {
 	name		= "l4d2 teapot commands",
 	author		= "MopeCup",
 	description = "提供一系列指令",
-	version		= "1.3.2",
+	version		= "1.3.3",
 	url			= ""
 
+}
+
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+	CreateNative("GetRestartTime", native_GetRestartTime);
+	RegPluginLibrary("teapot_commands");
+	return APLRes_Success;
 }
 
 public void
@@ -42,10 +52,16 @@ public void
 	AddCommandListener(Afk_Command, "go_away_from_keyboard");
 
 	HookEvent("player_disconnect", Event_PlayerDisconnect, EventHookMode_Pre);
+	HookEvent("mission_lost", Event_MissionLost);
 
 	PrecacheSound(SOUND_CONNECT);
 	PrecacheSound(SOUND_JOIN);
 	PrecacheSound(SOUND_QUIT);
+}
+
+public void OnMapStart()
+{
+	g_iRound = 0;
 }
 
 //=============================================================================
@@ -256,6 +272,28 @@ void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
 		if (IsValidClient(i) && !IsFakeClient(i))
 			EmitSoundToClient(i, SOUND_QUIT);
 	}
+}
+
+//灭团提示
+void Event_MissionLost(Event event, const char[] name, bool dontBroadcast)
+{
+    g_iRound++;
+    CPrintToChatAll("{blue}这是你们第{orange}%d{blue}次团灭，请再接再励", g_iRound);
+}
+
+int native_GetRestartTime(Handle plugin, int numParams)
+{
+	return GetRestartTime();
+}
+
+/**
+ * 返回生还重启次数
+ * 
+ * @return 生还重启次数
+ */
+int GetRestartTime()
+{
+	return g_iRound;
 }
 
 bool IsClientAndInGame(int client)

@@ -54,12 +54,12 @@ public void OnPluginStart()
     HookEvent("player_spawn", Event_PlayerSpawn);
     HookEvent("player_death", Event_PlayerDeath);
 
-    g_cvIGEnable = CreateConVar(PLUGIN_PREFIX ... "_enable", "1", "是否启用插件<0 = 关闭, 1 = 开启>", _, true, 0.0, true, 1.0);
+    g_cvIGEnable = CreateConVar(PLUGIN_PREFIX ... "_enable", "0", "是否启用插件<0 = 关闭, 1 = 开启>", _, true, 0.0, true, 1.0);
     g_cvIGColor[0] = CreateConVar(PLUGIN_PREFIX ... "_color_r", "255", "特感轮廓颜色(红色)", _, true, 0.0, true, 255.0);
-    g_cvIGColor[1] = CreateConVar(PLUGIN_PREFIX ... "_color_g", "0", "特感轮廓颜色(绿色)", _, true, 0.0, true, 255.0);
-    g_cvIGColor[2] = CreateConVar(PLUGIN_PREFIX ... "_color_b", "0", "特感轮廓颜色(蓝色)", _, true, 0.0, true, 255.0);
+    g_cvIGColor[1] = CreateConVar(PLUGIN_PREFIX ... "_color_g", "185", "特感轮廓颜色(绿色)", _, true, 0.0, true, 255.0);
+    g_cvIGColor[2] = CreateConVar(PLUGIN_PREFIX ... "_color_b", "230", "特感轮廓颜色(蓝色)", _, true, 0.0, true, 255.0);
     g_cvIGRange[0] = CreateConVar(PLUGIN_PREFIX ... "_range_min", "0", "发光最小范围<0即无限范围>", _, true, 0.0);
-    g_cvIGRange[1] = CreateConVar(PLUGIN_PREFIX ... "_range_max", "1500", "发光最大范围<0即无限范围>", _, true, 0.0);
+    g_cvIGRange[1] = CreateConVar(PLUGIN_PREFIX ... "_range_max", "0", "发光最大范围<0即无限范围>", _, true, 0.0);
     g_cvIGFlash = CreateConVar(PLUGIN_PREFIX ... "_flash", "0", "是否闪烁<0 = 不闪烁, 1 = 闪烁>", _, true, 0.0, true, 1.0);
 
     g_cvIGEnable.AddChangeHook(ConVarChange_PluginEnable);

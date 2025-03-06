@@ -7,1015 +7,708 @@
 #include <multicolors>
 #include <left4dhooks>
 #include <l4d2util>
+#include <cup_function>
+#include <l4d2_skill_detect>
+
+enum struct esPlayerCP
+{
+    int   sI;
+    int   cI;
+    int   dmgCB;
+    float maxFlow;
+
+    int   basicCP;
+    float completeBonus;
+
+    void  Reset(){
+        this.sI            = 0;
+        this.cI            = 0;
+        this.dmgCB         = 160;
+        this.basicCP       = 0;
+        this.maxFlow       = 0.0;
+        this.completeBonus = 0.0; }
+
+int GetCompletePoint()
+{
+    this.basicCP       = RoundToNearest((this.sI + this.cI * 50) * this.maxFlow);
+    this.completeBonus = this.dmgCB / 160.0;
+    return RoundToNearest(this.basicCP * (1 + this.completeBonus));
+}
+}
+
+esPlayerCP g_esPlayerCP[MAXPLAYERS + 1];
+
+enum struct esPlayerSP
+{
+    int   kill;
+    int   gunSkeet;
+    int   meleeSkeet;
+    int   deadStop;
+    int   pinned;
+    int   dmgGet;
+
+    float skeetRate[3];
+    float deadStopRate;
+    float noHurtRate;
+
+    void  Reset(){
+        this.kill       = 0;
+        this.gunSkeet   = 0;
+        this.meleeSkeet = 0;
+        this.deadStop   = 0;
+        this.pinned     = 0;
+        this.dmgGet     = 160;
+
+        for (int i = 0; i < 3; i++){
+            this.skeetRate[i] = 0.0; }
+this.deadStopRate = 0.0;
+this.noHurtRate   = 0.0;
+}
+
+int GetSkillPoint()
+{
+    this.skeetRate[2] = this.meleeSkeet / float(this.kill);
+    this.skeetRate[1] = this.gunSkeet / float(this.kill);
+    this.skeetRate[0] = this.skeetRate[1] + this.skeetRate[2];
+    float allSI       = float(this.deadStop + this.pinned);
+    this.deadStopRate = allSI == 0.0 ? 0.0 : this.deadStop / allSI;
+    this.noHurtRate   = this.dmgGet / 160.0;
+
+    int skillPoint    = RoundToNearest((50 * this.skeetRate[2] + 50 * this.skeetRate[1] + this.deadStopRate * 100 + this.dmgGet) / 3.6);
+    return skillPoint;
+}
+}
+
+esPlayerSP g_esPlayerSP[MAXPLAYERS + 1];
+
+Handle     g_hTimer;
+
+// int
+//     g_iRound;
+
+bool
+    g_bLeftSafeArea,
+    g_bInEndSafeRoom[MAXPLAYERS + 1],
+    g_bLateLoad;
 
 public Plugin myinfo =
 {
-	name	= "point system",
-	author	= "MopeCup",
-	version = "1.2.0",
+    name    = "point system",
+    author  = "MopeCup",
+    version = "1.3.1",
+
 
 }
 
-static const char g_sMainWeapons[][][] = {
-	{ "shotgun_chrome", "铁喷", "models/w_models/weapons/w_pumpshotgun_A.mdl", "50", "0", "8" }, 
-	{ "pumpshotgun", "木喷", "models/w_models/weapons/w_shotgun.mdl", "50", "0", "3" }, 
-	{ "smg", "乌兹", "models/w_models/weapons/w_smg_uzi.mdl", "50", "0", "2" }, 
-	{ "smg_silenced", "消音冲锋", "models/w_models/weapons/w_smg_a.mdl", "50", "0", "7" }, 
-	{ "autoshotgun", "连喷", "models/w_models/weapons/w_autoshot_m4super.mdl", "180", "180", "4" }, 
-	{ "shotgun_spas", "SPAS", "models/w_models/weapons/w_shotgun_spas.mdl", "200", "200", "11" }, 
-	{ "rifle", "M16A2", "models/w_models/weapons/w_rifle_m16a2.mdl", "170", "170", "5" }, 
-	{ "rifle_desert", "三连发", "models/w_models/weapons/w_desert_rifle.mdl", "175", "175", "9" }, 
-	{ "rifle_ak47", "AK47", "models/w_models/weapons/w_rifle_ak47.mdl", "400", "400", "26" }, 
-	{ "sniper_military", "连狙", "models/w_models/weapons/w_sniper_military.mdl", "650", "650", "10" }, 
-	{ "hunting_rifle", "木狙", "models/w_models/weapons/w_sniper_mini14.mdl", "250", "250", "6" }, 
-	{ "sniper_awp", "AWP", "models/w_models/weapons/w_sniper_awp.mdl", "500", "500", "35" }, 
-	{ "sniper_scout", "鸟狙", "models/w_models/weapons/w_sniper_scout.mdl", "50", "0", "36" }, 
-	{ "smg_mp5", "MP5", "models/w_models/weapons/w_smg_mp5.mdl", "50", "0", "33" }, 
-	{ "rifle_sg552", "SG552", "models/w_models/weapons/w_rifle_sg552.mdl", "180", "180", "34" },
-	//{"weapon_grenade_launcher",		"榴弹发射器",	"models/w_models/weapons/w_grenade_launcher.mdl"},
-	//{"weapon_rifle_m60",			"M60",			"models/w_models/weapons/w_m60.mdl"},
-};
-
-static const char g_sSubWeapons[][][] = {
-	// 需要使用近战解锁插件
-	{"fireaxe",			 "斧头",			 "models/weapons/melee/w_fireaxe.mdl",		   "50", "0"},
-	{ "baseball_bat",	  "棒球棒",		"models/weapons/melee/w_bat.mdl",			  "0", "0"},
-	{ "cricket_bat",	 "球拍",			 "models/weapons/melee/w_cricket_bat.mdl",	   "0", "0"},
-	{ "crowbar",		 "撬棍",			 "models/weapons/melee/w_crowbar.mdl",		   "0", "0"},
-	{ "frying_pan",		"平底锅",		  "models/weapons/melee/w_frying_pan.mdl",	   "0", "0"},
-	{ "golfclub",		  "高尔夫球棍", "models/weapons/melee/w_golfclub.mdl",		   "0", "0"},
-	{ "electric_guitar", "吉他",			 "models/weapons/melee/w_electric_guitar.mdl", "0", "0"},
-	{ "katana",			"武士刀",		  "models/weapons/melee/w_katana.mdl",		   "50", "0"},
-	{ "machete",		 "砍刀",			 "models/weapons/melee/w_machete.mdl",		   "50", "0"},
-	{ "tonfa",		   "警棍",		   "models/weapons/melee/w_tonfa.mdl",		   "0",	 "0" },
-	{ "knife",		   "小刀",		   "models/w_models/weapons/w_knife_t.mdl",		"50", "0"},
-	{ "pitchfork",	   "草叉",		   "models/weapons/melee/w_pitchfork.mdl",	   "0",	 "0" },
-	{ "shovel",			"铁铲",			"models/weapons/melee/w_shovel.mdl",			 "0", "0"},
-	{ "pistol_magnum",   "马格南",		 "",											 "50", "0"	},
- //{"weapon_chainsaw",		"电锯",			"models/weapons/melee/w_chainsaw.mdl"},
-};
-
-static const char g_sItems[][][] = {
-	//{"weapon_pain_pills",		"止痛药",		"models/w_models/weapons/w_eq_painpills.mdl",               "0"},
-	{"molotov",				 "燃烧瓶",		   "",													   "35",	 "35" },
-	{ "pipe_bomb",			   "土制炸弹",	   "",													   "30",	 "30" },
-	{ "vomitjar",				  "胆汁瓶",			"",														"40",  "40" },
-	{ "upgradepack_incendiary", "燃烧弹升级包", "models/w_models/weapons/w_eq_incendiary_ammopack.mdl", "40",  "40" },
-	{ "upgradepack_explosive",  "高爆弹升级包", "models/w_models/weapons/w_eq_explosive_ammopack.mdl",  "30",	"30" },
-	{ "laser_sight",			 "红点升级",		 "",													 "180", "180"},
-};
-
-ConVar
-	g_cvPointShop;
-
-bool
-	g_bLateLoad,
-	g_bLeftSafeArea,
-	g_bPointShop;
-
-int
-	g_iTotalPoint;
-// g_iBasePoint;
-
-float
-	g_fShopCD;
-
-Handle
-	g_hWritePath;
-
-enum struct esData
+public APLRes
+    AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
-	int	  dmgSI;
-	int	  dmgCI;
-	int	  money;
+    CreateNative("GetPlayerMoney", native_GetPlayerMoney);
+    CreateNative("GetTeamPoints", native_GetTeamPoints);
+    CreateNative("GetTeamBonus", native_GetTeamBonus);
+    RegPluginLibrary("point_system");
 
-	float PlayerPath;
-
-	void  CleanInfected(){
-		 this.dmgSI		 = 0;
-		 this.dmgCI		 = 0;
-		 this.PlayerPath = 0.0; }
-}
-
-esData
-	g_esData[MAXPLAYERS + 1];
-
-public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
-{
-	CreateNative("GetPlayerMoney", native_GetPlayerMoney);
-	CreateNative("GetTeamPoints", native_GetTeamPoints);
-	CreateNative("GetTeamBonus", native_GetTeamBonus);
-	RegPluginLibrary("point_system");
-
-	g_bLateLoad = late;
-	return APLRes_Success;
+    g_bLateLoad = late;
+    return APLRes_Success;
 }
 
 public void OnPluginStart()
 {
-	g_cvPointShop = CreateConVar("ps_pointshop", "0", "是否开启分数商店<0:否, 1:是>", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+    // Dealcvar();
+    // HookEvent("round_start", Event_RoundStart, EventHookMode_PostNoCopy);
+    HookEvent("round_end", Event_RoundEnd, EventHookMode_PostNoCopy);
+    HookEvent("map_transition", Event_MapTransition);
+    HookEvent("player_hurt", Event_PlayerHurt);
+    HookEvent("player_death", Event_PlayerDeath, EventHookMode_Pre);
+    HookEvent("infected_death", Event_InfectedDeath);
+    // HookEvent("tank_spawn", Event_TankSpawn);
+    //HookEvent("mission_lost", Event_MissionLost);
+    HookEvent("bot_player_replace", Event_PlayerReplaceBot, EventHookMode_Pre);
+    HookEvent("player_bot_replace", Event_BotReplacePlayer, EventHookMode_PostNoCopy);
+    HookEvent("jockey_ride", Event_InterruptCombo, EventHookMode_Post);
+    HookEvent("lunge_pounce", Event_InterruptCombo, EventHookMode_Post);
+    HookEvent("charger_pummel_start", Event_InterruptCombo, EventHookMode_Post);
+    HookEvent("choke_start", Event_InterruptCombo, EventHookMode_Post);
 
-	g_cvPointShop.AddChangeHook(ConVarChanged);
-	Dealcvar();
+    RegConsoleCmd("sm_point", Cmd_CheckPoint);
+    RegConsoleCmd("sm_bonus", Cmd_CheckPoint);
 
-	// HookEvent("round_start", Event_RoundStart, EventHookMode_PostNoCopy);
-	HookEvent("round_end", Event_RoundEnd, EventHookMode_PostNoCopy);
-	HookEvent("map_transition", Event_MapTransition);
-	HookEvent("player_hurt", Event_PlayerHurt);
-	// HookEvent("player_death", Event_PlayerDeath, EventHookMode_Pre);
-	HookEvent("infected_death", Event_InfectedDeath);
-	// HookEvent("tank_spawn", Event_TankSpawn);
-	HookEvent("mission_lost", Event_MissionLost);
-
-	RegConsoleCmd("sm_point", Cmd_CheckPoint);
-	RegConsoleCmd("sm_bonus", Cmd_CheckPoint);
-	//点数商店
-	RegConsoleCmd("sm_buy", Cmd_Shop);
-	RegConsoleCmd("sm_b", Cmd_Shop);
-
-	RegAdminCmd("sm_givemoney", Cmd_GiveMoney, ADMFLAG_GENERIC);
-
-	g_iTotalPoint = 0;
-	for (int i = 1; i <= MaxClients; i++)
-	{
-		g_esData[i].money = 160;
-	}
-
-	if (g_bLateLoad && L4D_HasAnySurvivorLeftSafeArea())
-		L4D_OnFirstSurvivorLeftSafeArea_Post(0);
+    if (g_bLateLoad && L4D_HasAnySurvivorLeftSafeArea())
+        L4D_OnFirstSurvivorLeftSafeArea_Post(0);
 }
 
-void ConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
-{
-	Dealcvar();
-}
+// void ConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
+// {
+// 	Dealcvar();
+// }
 
-void Dealcvar()
-{
-	g_bPointShop = GetConVarBool(g_cvPointShop);
-}
-
-//获取当前分数
-Action Cmd_CheckPoint(int client, int args)
-{
-	if (!client || !IsClientInGame(client))
-		return Plugin_Handled;
-
-	PrintPoint(client);
-
-	return Plugin_Handled;
-}
+// void Dealcvar()
+// {
+//
+// }
 
 //==============================
 //=     游戏开始阶段的初始化
 //==============================
 public void L4D_OnFirstSurvivorLeftSafeArea_Post(int client)
 {
-	if (!g_bLeftSafeArea)
-	{
-		g_hWritePath	= CreateTimer(1.0, Timer_WritePath, _, TIMER_REPEAT);
-		g_bLeftSafeArea = true;
-	}
+    delete g_hTimer;
+    if (!g_bLeftSafeArea)
+        g_hTimer = CreateTimer(1.0, Timer_CompletePoint);
+    g_bLeftSafeArea = true;
 }
 
-public void OnClientDisconnect(int client)
+public void OnClientDisconnect_Post(int client)
 {
-	g_esData[client].CleanInfected();
-	//g_esData[client].money = 160;
+    g_esPlayerCP[client].Reset();
+    g_esPlayerSP[client].Reset();
 }
 
-// public void OnMapStart(){
-//     if(L4D_IsFirstMapInScenario()){
+public void OnMapStart()
+{
+    //g_iRound = 0;
+    ResetData();
+}
 
-//     }
-// }
 public void OnMapEnd()
 {
-	g_bLeftSafeArea = false;
-	if (L4D_IsMissionFinalMap())
-	{
-		g_iTotalPoint = 0;
-		for (int i = 1; i <= MaxClients; i++)
-		{
-			g_esData[i].money = 160;
-		}
-	}
-
-	ClearData();
+    delete g_hTimer;
+    g_bLeftSafeArea = false;
+    for (int i = 1; i <= MaxClients; i++)
+    {
+        g_esPlayerCP[i].Reset();
+        g_esPlayerSP[i].Reset();
+        g_bInEndSafeRoom[i] = false;
+    }
 }
 
 void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 {
-	//PrintPoint(0);
-
-	OnMapEnd();
+    SummaryScore();
+    OnMapEnd();
 }
 
 void Event_MapTransition(Event event, const char[] name, bool dontBroadcast)
 {
-	PrintPoint(0);
+    delete g_hTimer;
+    SummaryScore();
 }
 
 void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 {
-	int attacker, victim;
-	if (!(attacker = GetClientOfUserId(event.GetInt("attacker"))) || !IsClientInGame(attacker))
-		return;
-
-	if (!(victim = GetClientOfUserId(event.GetInt("userid"))) || victim == attacker || !IsClientInGame(victim))
-		return;
-
-	if (GetClientTeam(victim) == 3 && GetClientTeam(attacker) == 2)
-	{
-		int dmg = event.GetInt("dmg_health");
-		switch (GetEntProp(victim, Prop_Send, "m_zombieClass"))
-		{
-			case 1, 2, 3, 4, 5, 6:
-			{
-				g_esData[attacker].dmgSI += dmg;
-				g_esData[attacker].money += (dmg / 50);
-			}
-		}
-	}
+    int attacker = GetClientOfUserId(event.GetInt("attacker"));
+    int victim   = GetClientOfUserId(event.GetInt("userid"));
+    if (!IsValidClient(victim))
+        return;
+    int dmg = event.GetInt("dmg_health");
+    if (IsValidSur(victim) && !g_bInEndSafeRoom[victim])
+    {
+        if (!IsFakeClient(victim))
+        {
+            int lastdmgCB               = g_esPlayerCP[victim].dmgCB > dmg ? g_esPlayerCP[victim].dmgCB - dmg : 0;
+            g_esPlayerCP[victim].dmgCB  = lastdmgCB;
+            int lastdmgGet              = g_esPlayerSP[victim].dmgGet > dmg ? g_esPlayerSP[victim].dmgGet - dmg : 0;
+            g_esPlayerSP[victim].dmgGet = lastdmgGet;
+        }
+        else
+        {
+            int player = IsClientIdle(victim);
+            if (player > 0)
+            {
+                int lastdmgCB               = g_esPlayerCP[player].dmgCB > dmg ? g_esPlayerCP[player].dmgCB - dmg : 0;
+                int lastdmgGet              = g_esPlayerSP[player].dmgGet > dmg ? g_esPlayerSP[player].dmgGet - dmg : 0;
+                g_esPlayerCP[player].dmgCB  = lastdmgCB;
+                g_esPlayerSP[player].dmgGet = lastdmgGet;
+            }
+            else
+            {
+                int lastdmgCB               = g_esPlayerCP[victim].dmgCB > dmg ? g_esPlayerCP[victim].dmgCB - dmg : 0;
+                g_esPlayerCP[victim].dmgCB  = lastdmgCB;
+                int lastdmgGet              = g_esPlayerSP[victim].dmgGet > dmg ? g_esPlayerSP[victim].dmgGet - dmg : 0;
+                g_esPlayerSP[victim].dmgGet = lastdmgGet;
+            }
+        }
+        return;
+    }
+    if (!IsValidClient(attacker))
+        return;
+    if (IsZombieClassSI(victim) && IsValidSur(attacker) && !g_bInEndSafeRoom[attacker])
+    {
+        g_esPlayerCP[attacker].sI += dmg;
+    }
 }
 
-void Event_MissionLost(Event event, const char[] name, bool dontBroadcast){
-	for(int i = 1; i <= MaxClients; i++){
-		if(IsValidSur(i)){
-			int point = g_esData[i].money - 100;
-			
-			if(point < 160){
-				g_esData[i].money = 160;
-			}
-			else
-				g_esData[i].money = point;
-		}
-	}
-	PrintToChatAll("队伍团灭，所有生还扣除100点积分");
-}
-
-// void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast){
-//     //生还死亡时，记录下他的路程
-//     int victim;
-//     if(!(victim = GetClientOfUserId(event.GetInt("userid"))) || GetClientTeam(victim) != 2)
-//         return;
-
-//     WritePlayerPath(victim, false, true);
-//     //PrintToChatAll("%f", g_esData[victim].PlayerPath);
+// void Event_MissionLost(Event event, const char[] name, bool dontBroadcast)
+// {
+//     g_iRound++;
+//     CPrintToChatAll("{blue}这是你们第{orange}%d{blue}次团灭，请再接再励", g_iRound);
 // }
+
+void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
+{
+    int attacker = GetClientOfUserId(event.GetInt("attacker"));
+    int victim   = GetClientOfUserId(event.GetInt("userid"));
+    if (!IsValidClient(victim))
+        return;
+    if (IsValidSur(victim) && !g_bInEndSafeRoom[victim])
+    {
+        if (!IsFakeClient(victim) || (IsFakeClient(victim) && IsClientIdle(victim) <= 0))
+        {
+            g_esPlayerCP[victim].dmgCB  = 0;
+            g_esPlayerSP[victim].dmgGet = 0;
+        }
+        else
+        {
+            int player                  = IsClientIdle(victim);
+            g_esPlayerCP[player].dmgCB  = 0;
+            g_esPlayerSP[player].dmgGet = 0;
+        }
+        return;
+    }
+    if (!IsValidClient(attacker))
+        return;
+    if (IsZombieClassSI(victim) && IsValidSur(attacker) && !g_bInEndSafeRoom[attacker])
+    {
+        if (!IsFakeClient(attacker))
+        {
+            g_esPlayerSP[attacker].kill++;
+        }
+    }
+}
 
 void Event_InfectedDeath(Event event, const char[] name, bool dontBroadcast)
 {
-	int attacker = GetClientOfUserId(event.GetInt("attacker"));
-	if (!attacker || !IsClientInGame(attacker) || GetClientTeam(attacker) != 2)
-		return;
+    int attacker = GetClientOfUserId(event.GetInt("attacker"));
+    if (!IsValidSur(attacker) || g_bInEndSafeRoom[attacker])
+        return;
+    g_esPlayerCP[attacker].cI++;
+}
 
-	g_esData[attacker].dmgCI++;
-	g_esData[attacker].money++;
+void Event_PlayerReplaceBot(Event event, const char[] name, bool dontBroadcast)
+{
+    int bot    = GetClientOfUserId(event.GetInt("bot"));
+    int player = GetClientOfUserId(event.GetInt("player"));
+    if (!bot || !player)
+        return;
+    if (IsValidSpec(player) && GetClientOfIdlePlayer(player) > 0)
+        return;
+    g_esPlayerSP[player].Reset();
+    CopyData(bot, player);
+    g_esPlayerCP[bot].Reset();
+    g_esPlayerSP[bot].Reset();
+}
+
+void Event_BotReplacePlayer(Event event, const char[] name, bool dontBroadcast)
+{
+    int bot    = GetClientOfUserId(event.GetInt("bot"));
+    int player = GetClientOfUserId(event.GetInt("player"));
+    if (!bot || !player)
+        return;
+    if (IsValidSpec(player) && GetClientOfIdlePlayer(player) > 0)
+        return;
+    g_esPlayerSP[bot].Reset();
+    CopyData(player, bot);
+    g_esPlayerCP[player].Reset();
+    g_esPlayerSP[player].Reset();
+}
+
+void Event_InterruptCombo(Event event, const char[] name, bool dontBroadcast)
+{
+    int attacker = GetClientOfUserId(event.GetInt("userid"));
+    int victim = GetClientOfUserId(event.GetInt("victim"));
+    if (IsValidSI(attacker) && IsValidSur(victim))
+    {
+        g_esPlayerSP[victim].pinned++;
+    }
 }
 
 public void L4D_OnSpawnTank_Post(int client, const float vecPos[3], const float vecAng[3])
 {
-	// for(int i = 1; i <= MaxClients; i++){
-	//     if(!IsValidSur(i))
-	//         continue;
-	//     WritePlayerPath(i, true, false);
-	// }
-	CPrintToChatAll("{green}[积分系统] {blue}坦克生成，路程已锁定!");
+    PrintToChatAll("Tank生成，路程将被锁定!");
 }
 
-//==============================
-//=        记录路程
-//==============================
-Action Timer_WritePath(Handle timer)
+Action Timer_CompletePoint(Handle timer)
 {
-	for (int i = 1; i <= MaxClients; i++)
-	{
-		if (!IsValidSur(i) || !IsPlayerAlive(i))
-			continue;
-		WritePlayerPath(i);
-	}
-
-	return Plugin_Continue;
+    g_hTimer = null;
+    for (int i = 1; i <= MaxClients; i++)
+    {
+        if (IsValidSur(i) || (IsValidSpec(i) && GetClientOfIdlePlayer(i)))
+        {
+            if (IsPlayerAlive(i))
+            {
+                float flow = GetSurvivorFlow(i);
+                if (g_esPlayerCP[i].maxFlow < flow)
+                {
+                    if (flow >= 1.0 || !IsTankStayInGame())
+                    {
+                        g_esPlayerCP[i].maxFlow = flow;
+                    }
+                }
+            }
+            if (!g_bInEndSafeRoom[i] && g_esPlayerCP[i].maxFlow >= 1.0 && IsClientInSafeArea(i))
+                g_bInEndSafeRoom[i] = true;
+        }
+    }
+    g_hTimer = CreateTimer(1.0, Timer_CompletePoint);
+    return Plugin_Continue;
 }
 
-//==============================
-//=        积分播报
-//==============================
-void PrintPoint(int player)
+public void OnSkeetMelee(int survivor, int victim, bool isHunter, bool headshot)
 {
-	if (!g_bLeftSafeArea)
-		return;
-
-	delete g_hWritePath;
-
-	int count;
-	int client;
-	int[] clients = new int[MaxClients];
-	for (client = 1; client <= MaxClients; client++)
-	{
-		if (IsClientInGame(client) && ((GetClientTeam(client) == 1 && IsGetBotOfIdlePlayer(client) != 0) || GetClientTeam(client) == 2))
-			clients[count++] = client;
-	}
-
-	if (!count)
-		return;
-
-	int infoMax	  = count < 4 ? 4 : count;
-	int iPointSum = 0;
-	int iPlayerPoint[MAXPLAYERS + 1];
-
-	int i;
-	for (i = 0; i < infoMax; i++)
-	{
-		client				 = clients[i];
-		int	  dmgSI			 = g_esData[client].dmgSI;
-		int	  dmgCI			 = g_esData[client].dmgCI;
-		float path			 = g_esData[client].PlayerPath;
-
-		iPlayerPoint[client] = RoundToNearest((dmgSI / 50 + dmgCI) * path);
-		iPointSum += iPlayerPoint[client];
-	}
-
-	float fHealth = 0.0;
-	count = 0;
-	for(i = 1; i <= MaxClients; i++){
-		if(IsValidSur(i)){
-			if(IsPlayerAlive(i))
-				fHealth += float(GetClientHealth(i));
-			count++;
-		}
-	}
-	float fBonus = fHealth / float(count);
-
-
-	if (player == 0)
-		g_iTotalPoint += RoundToNearest(iPointSum * (1 + fBonus/100.0));
-
-	//排序
-	int j;
-	for (i = 0; i < (infoMax - 1); i++)
-	{
-		for (j = i + 1; j < infoMax; j++)
-		{
-			int client1, client2;
-			client1 = clients[i];
-			client2 = clients[j];
-			if (iPlayerPoint[client1] < iPlayerPoint[client2])
-			{
-				clients[i] = client2;
-				clients[j] = client1;
-			}
-		}
-	}
-
-	//播报
-	if (player == 0)
-	{
-		client = clients[0];
-		CPrintToChatAll("{green}分数统计\n{green}[累计总分: {olive}%d {green}| 本关总分: {olive}%d {green}| 奖励分: {olive}%.1f%% {green}] \n{green}[个人最高] {olive}%N - %d", g_iTotalPoint, iPointSum, fBonus, client, iPlayerPoint[client]);
-		for (i = 0; i < infoMax; i++)
-		{
-			client = clients[i];
-			CPrintToChat(client, "{green}[你的分数] {olive}%d(%d%%) #%d", iPlayerPoint[client], iPlayerPoint[client] * 100 / iPointSum, i + 1);
-		}
-	}
-	else {
-		if ((GetClientTeam(player) == 1 && IsGetBotOfIdlePlayer(player) != 0) || GetClientTeam(player) == 2)
-		{
-			client = clients[0];
-			CPrintToChat(player, "{green}[当前分数{olive}%d {green}| 奖励分: {olive}%.1f%% {green}]\n[个人最高] {olive}%N - %d\n{green}[你的分数] {olive}%d", iPointSum, fBonus, client, iPlayerPoint[client], iPlayerPoint[player]);
-		}
-		else {
-			CPrintToChat(player, "{green}[当前分数{olive}%d {green}| 奖励分: {olive}%.1f%% {green}]\n[个人最高] {olive}%N - %d", iPointSum, fBonus, client, iPlayerPoint[client]);
-		}
-		g_hWritePath = CreateTimer(1.0, Timer_WritePath, _, TIMER_REPEAT);
-	}
+    if (survivor > 0)
+    {
+        g_esPlayerSP[survivor].meleeSkeet++;
+        g_esPlayerSP[survivor].deadStop++;
+    }
 }
 
-//==============================
-//=         Shop
-//==============================
-Action Cmd_GiveMoney(int client, int args)
+public void OnSkeetSniper(int survivor, int victim, bool isHunter, bool headshot, int shots)
 {
-	if (!g_bPointShop)
-	{
-		ReplyToCommand(client, "点数商店未开启");
-		return Plugin_Handled;
-	}
-	if (IsValidSur(client) && IsPlayerAlive(client) && IsClientInSafeArea(client))
-	{
-		char sMoney[16];
-		GetCmdArg(1, sMoney, sizeof sMoney);
-		g_esData[client].money += StringToInt(sMoney);
-	}
-
-	return Plugin_Handled;
+    if (survivor > 0)
+    {
+        g_esPlayerSP[survivor].gunSkeet++;
+        g_esPlayerSP[survivor].deadStop++;
+    }
 }
 
-Action Cmd_Shop(int client, int args)
+public void OnSkeetMagnum(int survivor, int victim, bool isHunter, bool headshot, int shots)
 {
-	if (!g_bPointShop)
-	{
-		ReplyToCommand(client, "点数商店未开启");
-		return Plugin_Handled;
-	}
-	if (IsValidSur(client) && IsPlayerAlive(client) && IsClientInSafeArea(client))
-	{
-		FakeClientCommand(client, "sm_hide");
-		CreateShopMenu(client);
-	}
-	else
-		PrintToChat(client, "\x05请在安全区域内购买物品");
-	return Plugin_Handled;
+    if (survivor > 0)
+    {
+        g_esPlayerSP[survivor].gunSkeet++;
+        g_esPlayerSP[survivor].deadStop++;
+    }
 }
 
-public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3], float angles[3], int& weapon, int& subtype, int& cmdnum, int& tickcount, int& seed, int mouse[2])
+public void OnSkeetShotgun(int survivor, int victim, bool isHunter, bool headshot, int shots)
 {
-	if (!g_bPointShop)
-		return Plugin_Continue;
-	if (buttons & (IN_RELOAD | IN_USE) == (IN_RELOAD | IN_USE))
-	{
-		if (IsValidSur(client) && IsPlayerAlive(client) && IsClientInSafeArea(client))
-		{
-			if (GetEngineTime() - g_fShopCD >= 2.0)
-			{
-				FakeClientCommand(client, "sm_hide");
-				g_fShopCD = GetEngineTime();
-			}
-			CreateShopMenu(client);
-			if (buttons == (IN_RELOAD | IN_USE))
-				buttons &= ~IN_USE;
-		}
-		else {
-			if (GetEngineTime() - g_fShopCD >= 2.0)
-			{
-				PrintToChat(client, "\x05请在安全区域内购买物品");
-				g_fShopCD = GetEngineTime();
-			}
-		}
-	}
-	return Plugin_Continue;
+    if (survivor > 0)
+    {
+        g_esPlayerSP[survivor].gunSkeet++;
+        g_esPlayerSP[survivor].deadStop++;
+    }
 }
 
-void CreateShopMenu(int client)
+public void OnSkeetGL(int survivor, int victim, bool isHunter, bool headshot)
 {
-	Menu menu = new Menu(Menu_Handler);
-	menu.SetTitle("积分商店\n———————————————");
-
-	menu.AddItem("a", "购买主武器");
-	menu.AddItem("b", "购买副武器");
-	menu.AddItem("c", "购买道具");
-	menu.AddItem("d", "退货");
-
-	menu.ExitButton = true;
-	menu.Display(client, MENU_TIME_FOREVER);
+    if (survivor > 0)
+    {
+        g_esPlayerSP[survivor].gunSkeet++;
+        g_esPlayerSP[survivor].deadStop++;
+    }
 }
 
-int Menu_Handler(Menu menu, MenuAction action, int client, int itemNum)
+public void OnHunterDeadstop(int survivor, int hunter)
 {
-	switch (action)
-	{
-		case MenuAction_End:
-			delete menu;
-		case MenuAction_Select:
-		{
-			char sItem[2];
-			if (menu.GetItem(itemNum, sItem, sizeof sItem))
-			{
-				switch (sItem[0])
-				{
-					case 'a':
-					{
-						MW_Menu(client);
-					}
-					case 'b':
-					{
-						SW_Menu(client);
-					}
-					case 'c':
-					{
-						I_Menu(client);
-					}
-					case 'd':
-					{
-						Disorder_Menu(client);
-					}
-				}
-			}
-		}
-	}
-	return 0;
+    g_esPlayerSP[survivor].deadStop++;
 }
 
-//主武器菜单
-void MW_Menu(int client)
+public void OnJockeyDeadstop(int survivor, int jockey)
 {
-	int	 iMoney = g_esData[client].money;
-	char sLine[64];
-
-	Menu mW_Menu = new Menu(mW_Menu_Handler);
-	FormatEx(sLine, sizeof sLine, "您当前积分 %d\n选择主武器", iMoney);
-	mW_Menu.SetTitle(sLine);
-
-	for (int i = 0; i < 15; i++)
-	{
-		FormatEx(sLine, sizeof sLine, "%s(价格 %s)", g_sMainWeapons[i][1], g_sMainWeapons[i][3]);
-		mW_Menu.AddItem(g_sMainWeapons[i][0], sLine);
-	}
-
-	mW_Menu.ExitBackButton = true;
-	mW_Menu.Display(client, MENU_TIME_FOREVER);
+    g_esPlayerSP[survivor].deadStop++;
 }
 
-int mW_Menu_Handler(Menu menu, MenuAction action, int client, int param2)
+public void OnChargerLevel(int survivor, int charger, bool headshot)
 {
-	int iMoney = g_esData[client].money;
-	switch (action)
-	{
-		case MenuAction_Select:
-		{
-			if (IsClientInSafeArea(client))
-			{
-				char line[32];
-				FormatEx(line, sizeof line, "give %s", g_sMainWeapons[param2][0]);
-				if (StringToInt(g_sMainWeapons[param2][3]) <= iMoney)
-				{
-					g_esData[client].money -= StringToInt(g_sMainWeapons[param2][3]);
-					CheatCommand(client, line);
-					PrintToChatAll("\x05%N\x01购买了\x05%s", client, g_sMainWeapons[param2][1]);
-				}
-				else
-					PrintToChat(client, "\x05积分不足, 购买失败");
-			}
-			else {
-				PrintToChat(client, "\x05请在安全区域内购买物品");
-			}
-		}
-		case MenuAction_Cancel:
-		{
-			if (param2 == MenuCancel_ExitBack)
-			{
-				CreateShopMenu(client);
-			}
-		}
-		case MenuAction_End:
-		{
-			delete menu;
-			FakeClientCommand(client, "sm_show");
-		}
-	}
-	return 0;
+    g_esPlayerSP[survivor].deadStop++;
 }
 
-//副武器
-void SW_Menu(int client)
+public void OnChargerLevelHurt(int survivor, int charger, int damage, bool headshot)
 {
-	int	 iMoney = g_esData[client].money;
-	char sLine[64];
-
-	Menu sW_Menu = new Menu(SW_Menu_Handler);
-	FormatEx(sLine, sizeof sLine, "您当前积分 %d\n选择副武器", iMoney);
-	sW_Menu.SetTitle(sLine);
-
-	for (int i = 0; i < 14; i++)
-	{
-		FormatEx(sLine, sizeof sLine, "%s(价格 %s)", g_sSubWeapons[i][1], g_sSubWeapons[i][3]);
-		sW_Menu.AddItem(g_sSubWeapons[i][0], sLine);
-	}
-
-	sW_Menu.ExitBackButton = true;
-	sW_Menu.Display(client, MENU_TIME_FOREVER);
+    g_esPlayerSP[survivor].deadStop++;
 }
 
-int SW_Menu_Handler(Menu menu, MenuAction action, int client, int param2)
+public void OnTongueCut(int survivor, int smoker)
 {
-	int iMoney = g_esData[client].money;
-	switch (action)
-	{
-		case MenuAction_Select:
-		{
-			if (IsClientInSafeArea(client))
-			{
-				char line[32];
-				FormatEx(line, sizeof line, "give %s", g_sSubWeapons[param2][0]);
-				if (StringToInt(g_sSubWeapons[param2][3]) <= iMoney)
-				{
-					g_esData[client].money -= StringToInt(g_sSubWeapons[param2][3]);
-					CheatCommand(client, line);
-					PrintToChatAll("\x05%N\x01购买了\x05%s", client, g_sSubWeapons[param2][1]);
-				}
-				else
-					PrintToChat(client, "\x05积分不足, 购买失败");
-			}
-			else {
-				PrintToChat(client, "\x05请在安全区域内购买物品");
-			}
-		}
-		case MenuAction_Cancel:
-		{
-			if (param2 == MenuCancel_ExitBack)
-			{
-				CreateShopMenu(client);
-			}
-		}
-		case MenuAction_End:
-		{
-			delete menu;
-			FakeClientCommand(client, "sm_show");
-		}
-	}
-	return 0;
+    g_esPlayerSP[survivor].deadStop++;
 }
 
-//物品
-void I_Menu(int client)
+public void OnSmokerSelfClear(int survivor, int smoker, bool withShove, bool headshot)
 {
-	int	 iMoney = g_esData[client].money;
-	char sLine[64];
-
-	Menu i_Menu = new Menu(I_Menu_Handler);
-	FormatEx(sLine, sizeof sLine, "您当前积分 %d\n选择物品", iMoney);
-	i_Menu.SetTitle(sLine);
-
-	for (int i = 0; i < 6; i++)
-	{
-		FormatEx(sLine, sizeof sLine, "%s(价格 %s)", g_sItems[i][1], g_sItems[i][3]);
-		i_Menu.AddItem(g_sItems[i][0], sLine);
-	}
-
-	i_Menu.ExitBackButton = true;
-	i_Menu.Display(client, MENU_TIME_FOREVER);
+    g_esPlayerSP[survivor].deadStop++;
 }
 
-int I_Menu_Handler(Menu menu, MenuAction action, int client, int param2)
+Action Cmd_CheckPoint(int client, int args)
 {
-	int iMoney = g_esData[client].money;
-	switch (action)
-	{
-		case MenuAction_Select:
-		{
-			if (IsClientInSafeArea(client))
-			{
-				char line[32];
-				if (param2 != 5)
-					FormatEx(line, sizeof line, "give %s", g_sItems[param2][0]);
-				else
-					FormatEx(line, sizeof line, "upgrade_add %s", g_sItems[param2][0]);
-				if (StringToInt(g_sItems[param2][3]) <= iMoney)
-				{
-					g_esData[client].money -= StringToInt(g_sItems[param2][3]);
-					CheatCommand(client, line);
-					PrintToChatAll("\x05%N\x01购买了\x05%s", client, g_sItems[param2][1]);
-				}
-				else
-					PrintToChat(client, "\x05积分不足, 购买失败");
-			}
-			else {
-				PrintToChat(client, "\x05请在安全区域内购买物品");
-			}
-		}
-		case MenuAction_Cancel:
-		{
-			if (param2 == MenuCancel_ExitBack)
-			{
-				CreateShopMenu(client);
-			}
-		}
-		case MenuAction_End:
-		{
-			delete menu;
-			FakeClientCommand(client, "sm_show");
-		}
-	}
-	return 0;
+    if (IsValidSur(client))
+        PrintPointToClient(client);
+    return Plugin_Handled;
 }
 
-//退货菜单
-void Disorder_Menu(int client)
+void PrintPointToClient(int client)
 {
-	int	 iMoney = g_esData[client].money;
-	char sLine[64];
+    int count;
+    int[] clients = new int[MaxClients];
+    for (int i = 1; i <= MaxClients; i++)
+    {
+        if (IsValidSur(i) || (IsValidSpec(i) && GetClientOfIdlePlayer(i) > 0))
+        {
+            clients[count++] = i;
+        }
+    }
+    int completePoint[MAXPLAYERS + 1],
+        basicPoint[MAXPLAYERS + 1],
+        // completeBonus[MAXPLAYERS + 1],
+        teamPoint = 0;
+    float completeBonus[MAXPLAYERS + 1];
+    for (int i = 0; i < count; i++)
+    {
+        int client1            = clients[i];
+        completePoint[client1] = g_esPlayerCP[client1].GetCompletePoint();
+        basicPoint[client1]    = g_esPlayerCP[client1].basicCP;
+        completeBonus[client1] = g_esPlayerCP[client1].completeBonus;
+        teamPoint += completePoint[client1];
+    }
+    for (int i = 0; i < count - 1; i++)
+    {
+        for (int j = i + 1; j < count; j++)
+        {
+            int client1 = clients[i];
+            int client2 = clients[j];
+            if (completePoint[client1] < completePoint[client2])
+            {
+                clients[i] = client2;
+                clients[j] = client1;
+            }
+        }
+    }
 
-	Menu disorder_Menu = new Menu(Disorder_Menu_Handler);
-	FormatEx(sLine, sizeof sLine, "您当前积分 %d\n选择退货物品", iMoney);
-	disorder_Menu.SetTitle(sLine);
-
-	disorder_Menu.AddItem("a", "1号栏");
-	disorder_Menu.AddItem("b", "2号栏");
-	disorder_Menu.AddItem("c", "3号栏");
-	disorder_Menu.AddItem("d", "4号栏");
-
-	disorder_Menu.ExitBackButton = true;
-	disorder_Menu.Display(client, MENU_TIME_FOREVER);
+    //总结播报
+    if (client == 0)
+    {
+        int highestClient = clients[0];
+        CPrintToChatAll("{blue}❀ 本关总分 {orange}%d {blue}❀", teamPoint);
+        CPrintToChatAll("{blue}最高得分 {orange}%N %d", highestClient, completePoint[highestClient]);
+        for (int i = 0; i < count; i++)
+        {
+            int currentClient = clients[i];
+            CPrintToChat(currentClient, "{blue}你的得分 {orange}%d#%d {blue}完成得分 {orange}%d {blue}奖励分 {orange}%.1f%%", completePoint[currentClient], i + 1, basicPoint[currentClient], completeBonus[currentClient] * 100.0);
+        }
+    }
+    else
+    {
+        int highestClient = clients[0];
+        CPrintToChat(client, "{blue}❀ 当前总分 {orange}%d {blue}❀", teamPoint);
+        CPrintToChat(client, "{blue}最高得分 {orange}%N %d", highestClient, completePoint[highestClient]);
+        CPrintToChat(client, "{blue}你的得分 {orange}%d {blue}完成得分 {orange}%d {blue}奖励分 {orange}%.1f%%", completePoint[client], basicPoint[client], completeBonus[client] * 100.0);
+    }
 }
 
-int Disorder_Menu_Handler(Menu menu, MenuAction action, int client, int itemNum)
+void SummaryScore()
 {
-	// int iMoney = g_esData[client].money;
-	switch (action)
-	{
-		case MenuAction_Select:
-		{
-			char sItem[2];
-			if (menu.GetItem(itemNum, sItem, sizeof sItem))
-			{
-				int w_id;
-				switch (sItem[0])
-				{
-					case 'a':
-					{
-						w_id = GetPlayerWeaponSlot(client, 0);
-						if (IsValidEntity(w_id))
-						{
-							int wepid = IdentifyWeapon(w_id);
-							for (int i = 0; i < 15; i++)
-							{
-								if (wepid == StringToInt(g_sMainWeapons[i][5]))
-								{
-									g_esData[client].money += StringToInt(g_sMainWeapons[i][4]);
-									RemovePlayerItem(client, w_id);
-									RemoveEntity(w_id);
-									PrintToChatAll("\x05%N\x01退货了\x05%s, \x01回收了\x05%s\x01分", client, g_sMainWeapons[i][1], g_sMainWeapons[i][4]);
-									break;
-								}
-							}
-						}
-						else
-							return 0;
-					}
-					case 'b':
-					{
-						w_id = GetPlayerWeaponSlot(client, 1);
-						if (IsValidEntity(w_id))
-						{
-							char classname[32];
-							GetEntPropString(w_id, Prop_Data, "m_ModelName", classname, sizeof(classname));
-							for (int i = 0; i < 14; i++)
-							{
-								if (StrContains(classname, g_sSubWeapons[i][0], true) != -1)
-								{
-									g_esData[client].money += StringToInt(g_sSubWeapons[i][4]);
-									RemovePlayerItem(client, w_id);
-									RemoveEntity(w_id);
-									PrintToChatAll("\x05%N\x01退货了\x05%s, \x01回收了\x05%s\x01分", client, g_sSubWeapons[i][1], g_sSubWeapons[i][4]);
-									break;
-								}
-							}
-						}
-						else
-							return 0;
-					}
-					case 'c':
-					{
-						w_id = GetPlayerWeaponSlot(client, 2);
-						if (IsValidEntity(w_id))
-						{
-							char classname[32];
-							GetEntPropString(w_id, Prop_Data, "m_ModelName", classname, sizeof(classname));
-							for (int i = 0; i < 3; i++)
-							{
-								if (StrContains(classname, g_sItems[i][0], true) != -1)
-								{
-									g_esData[client].money += StringToInt(g_sItems[i][4]);
-									RemovePlayerItem(client, w_id);
-									RemoveEntity(w_id);
-									PrintToChatAll("\x05%N\x01退货了\x05%s, \x01回收了\x05%s\x01分", client, g_sItems[i][1], g_sItems[i][4]);
-									break;
-								}
-							}
-						}
-						else
-							return 0;
-					}
-					case 'd':
-					{
-						w_id = GetPlayerWeaponSlot(client, 3);
-						if (IsValidEntity(w_id))
-						{
-							char classname[32];
-							GetEntPropString(w_id, Prop_Data, "m_ModelName", classname, sizeof(classname));
-							for (int i = 3; i < 5; i++)
-							{
-								if (StrContains(classname, g_sItems[i][0], true) != -1)
-								{
-									g_esData[client].money += StringToInt(g_sItems[i][4]);
-									RemovePlayerItem(client, w_id);
-									RemoveEntity(w_id);
-									PrintToChatAll("\x05%N\x01退货了\x05%s, \x01回收了\x05%s\x01分", client, g_sItems[i][1], g_sItems[i][4]);
-									break;
-								}
-							}
-						}
-						else
-							return 0;
-					}
-				}
-			}
-		}
-		case MenuAction_Cancel:
-		{
-			if (itemNum == MenuCancel_ExitBack)
-			{
-				CreateShopMenu(client);
-			}
-		}
-		case MenuAction_End:
-		{
-			delete menu;
-			FakeClientCommand(client, "sm_show");
-		}
-	}
-	return 0;
+    if (!g_bLeftSafeArea)
+        return;
+    //总结
+    PrintPointToClient(0);
+    PanelPrint_SkillPoint();
+}
+
+void PanelPrint_SkillPoint()
+{
+    for (int i = 1; i <= MaxClients; i++)
+    {
+        if (IsValidClient(i) && !IsFakeClient(i))
+        {
+            switch (GetClientTeam(i))
+            {
+                case 1:
+                {
+                    if (GetClientOfIdlePlayer(i) > 0)
+                        GeneratePanel(i);
+                }
+                case 2:
+                {
+                    GeneratePanel(i);
+                }
+            }
+        }
+    }
+}
+
+void GeneratePanel(int client)
+{
+    Panel panel = new Panel();
+    int kill,
+        gunSkeet,
+        meleeSkeet,
+        pinned;
+
+    float meleeSkeetRate,
+        gunSkeetRate,
+        skeetRate,
+        deadStopRate,
+        noHurtRate;
+
+    kill = g_esPlayerSP[client].kill;
+    gunSkeet = g_esPlayerSP[client].gunSkeet;
+    meleeSkeet = g_esPlayerSP[client].meleeSkeet;
+    pinned = g_esPlayerSP[client].pinned;
+    int finalSkillPoint = g_esPlayerSP[client].GetSkillPoint();
+    skeetRate           = g_esPlayerSP[client].skeetRate[0];
+    gunSkeetRate        = g_esPlayerSP[client].skeetRate[1];
+    meleeSkeetRate      = g_esPlayerSP[client].skeetRate[2];
+    deadStopRate        = g_esPlayerSP[client].deadStopRate;
+    noHurtRate          = g_esPlayerSP[client].noHurtRate;
+
+    char line[128];
+    FormatEx(line, sizeof line, "▶ 玩家: %N ", client);
+    panel.DrawText(line);
+    panel.DrawText(" ");
+
+    FormatEx(line, sizeof line, "▶ 回合击杀: %d", kill > 0 ? kill : 0);
+    panel.DrawText(line);
+    panel.DrawText(" ");
+
+    FormatEx(line, sizeof line, "★ 空爆率: %.1f%% \n 枪械空爆率(GSR): %.1f%%(%d) | 近战空爆率(MSR): %.1f%%(%d) ", skeetRate * 100.0, gunSkeetRate * 100.0, gunSkeet, meleeSkeetRate * 100.0, meleeSkeet);
+    panel.DrawText(line);
+    FormatEx(line, sizeof line, "☆ 防控率: %.1f%% 被控: %d次 ", deadStopRate * 100.0, pinned);
+    panel.DrawText(line);
+    FormatEx(line, sizeof line, "★ 保血率: %.1f%% ", noHurtRate * 100.0);
+    panel.DrawText(line);
+    panel.DrawText(" ");
+
+    FormatEx(line, sizeof line, "▶ 综合评分: %d ", finalSkillPoint);
+    panel.DrawText(line);
+
+    panel.Send(client, DummyHandler, 60);
+    delete panel;
+}
+
+public int DummyHandler(Handle menu, MenuAction action, int param1, int param2)
+{
+    return 1;
 }
 
 //==============================
 //=         子函数
 //==============================
-//写入路程
-void WritePlayerPath(int client)
+void ResetData()
 {
-	if (!IsValidSur(client))
-		return;
+    for (int i = 1; i <= MaxClients; i++)
+    {
+        g_esPlayerCP[i].Reset();
+        g_esPlayerSP[i].Reset();
+    }
+}
 
-	//只有当前路程超过记录路程才会记录
-	float path = GetSurvivorFlow(client);
-	if (path < 0.99 && IsTankStayInGame())
-		return;
-
-	if (g_esData[client].PlayerPath >= path)
-		return;
-	g_esData[client].PlayerPath = path;
+void CopyData(int passer, int receiver)
+{
+    g_esPlayerCP[receiver].sI            = g_esPlayerCP[passer].sI;
+    g_esPlayerCP[receiver].cI            = g_esPlayerCP[passer].cI;
+    g_esPlayerCP[receiver].maxFlow       = g_esPlayerCP[passer].maxFlow;
+    g_esPlayerCP[receiver].dmgCB         = g_esPlayerCP[passer].dmgCB;
+    g_esPlayerCP[receiver].basicCP       = g_esPlayerCP[passer].basicCP;
+    g_esPlayerCP[receiver].completeBonus = g_esPlayerCP[passer].completeBonus;
 }
 
 //获取路程
 float GetSurvivorFlow(int client)
 {
-	//非存活生还返回0
-	if (!IsValidSur(client))
-		return 0.0;
+    //非存活生还返回0
+    if (!IsValidSur(client))
+        return 0.0;
 
-	static float maxDistance;
-	maxDistance = L4D2Direct_GetFlowDistance(client);
-	return maxDistance / L4D2Direct_GetMapMaxFlowDistance();
-}
-
-//是否为有效索引
-bool IsValidClient(int client)
-{
-	if (client > 0 && client <= MaxClients && IsClientInGame(client))
-		return true;
-	return false;
-}
-
-//是否为存活的生还
-bool IsValidSur(int client)
-{
-	if (IsValidClient(client) && GetClientTeam(client) == 2)
-		return true;
-	return false;
-}
-
-//场上是否存在坦克
-bool IsTankStayInGame()
-{
-	int i;
-	for (i = 1; i <= MaxClients; i++)
-	{
-		if (!IsValidClient(i) || GetClientTeam(i) != 3 || GetEntProp(i, Prop_Send, "m_zombieClass") != 8)
-			continue;
-
-		return true;
-	}
-
-	return false;
-}
-
-void ClearData()
-{
-	for (int i = 1; i <= MaxClients; i++)
-		g_esData[i].CleanInfected();
-}
-
-//返回闲置玩家对应的bot
-int IsGetBotOfIdlePlayer(int client)
-{
-	for (int i = 1; i <= MaxClients; i++)
-		if (IsClientInGame(i) && IsFakeClient(i) && GetClientTeam(i) == 2 && IsClientIdle(i) == client && IsPlayerAlive(i))
-			return i;
-
-	return 0;
-}
-
-//返回电脑幸存者对应的玩家.
-int IsClientIdle(int client)
-{
-	if (!HasEntProp(client, Prop_Send, "m_humanSpectatorUserID"))
-		return 0;
-
-	return GetClientOfUserId(GetEntProp(client, Prop_Send, "m_humanSpectatorUserID"));
+    static float maxDistance;
+    maxDistance = L4D2Direct_GetFlowDistance(client);
+    return maxDistance / L4D2Direct_GetMapMaxFlowDistance();
 }
 
 //生还是否在安全区域
 //代码来自"https://steamcommunity.com/id/ChengChiHou/"
 stock bool IsClientInSafeArea(int client)
 {
-	int nav = L4D_GetLastKnownArea(client);
-	if (!nav)
-		return false;
-	int	 iAttr		   = L4D_GetNavArea_SpawnAttributes(view_as<Address>(nav));
-	bool bInStartPoint = !!(iAttr & 0x80);
-	bool bInCheckPoint = !!(iAttr & 0x800);
-	if (!bInStartPoint && !bInCheckPoint)
-		return false;
-	return true;
+    int nav = L4D_GetLastKnownArea(client);
+    if (!nav)
+        return false;
+    int  iAttr         = L4D_GetNavArea_SpawnAttributes(view_as<Address>(nav));
+    bool bInStartPoint = !!(iAttr & 0x80);
+    bool bInCheckPoint = !!(iAttr & 0x800);
+    if (!bInStartPoint && !bInCheckPoint)
+        return false;
+    return true;
 }
 
-void CheatCommand(int client, const char[] sCommand)
+bool IsTankStayInGame()
 {
-	if (!client || !IsClientInGame(client))
-		return;
+    int i;
+    for (i = 1; i <= MaxClients; i++)
+    {
+        if (!IsValidClient(i) || GetClientTeam(i) != 3 || GetEntProp(i, Prop_Send, "m_zombieClass") != 8)
+            continue;
 
-	char sCmd[32];
-	if (SplitString(sCommand, " ", sCmd, sizeof sCmd) == -1)
-		strcopy(sCmd, sizeof sCmd, sCommand);
+        return true;
+    }
 
-	int iFlagBits, iCmdFlags;
-	iFlagBits = GetUserFlagBits(client);
-	iCmdFlags = GetCommandFlags(sCmd);
-	SetUserFlagBits(client, ADMFLAG_ROOT);
-	SetCommandFlags(sCmd, iCmdFlags & ~FCVAR_CHEAT);
-	FakeClientCommand(client, sCommand);
-	SetUserFlagBits(client, iFlagBits);
-	SetCommandFlags(sCmd, iCmdFlags);
+    return false;
 }
 
 //==============================
 //=			Native
 //==============================
-int native_GetPlayerMoney(Handle plugin, int numParams){
-	int client = GetNativeCell(1);
-	return GetPlayerMoney(client);
+int native_GetPlayerMoney(Handle plugin, int numParams)
+{
+    int client = GetNativeCell(1);
+    return GetPlayerMoney(client);
 }
 
 /**
  * 获取玩家当前持有的积分
- * 
+ *
  * @param client 	玩家索引
  * @return 有效生还返回持有积分，无效生还返回-1
  */
-int GetPlayerMoney(int client){
-	int iMoney;
-	if(IsValidSur(client))
-		iMoney = g_esData[client].money;
-	else
-		iMoney = -1;
-	return iMoney;
+int GetPlayerMoney(int client)
+{
+    client = 1;
+    return -1;
 }
 
-int native_GetTeamPoints(Handle plugin, int numParams){
-	return GetTeamPoints();
+int native_GetTeamPoints(Handle plugin, int numParams)
+{
+    return GetTeamPoints();
 }
 
 /**
  * 获取团队总计分数
  * @remark 总计分数为路程与累计获取积分之积, 不会被消耗
- * 
+ *
  * @return 返回生还团队获取的总分
  */
-int GetTeamPoints(){
-	int iPointSum = 0;
-	for(int i = 1; i <= MaxClients; i++){
-		if(IsValidSur(i)){
-			int dmgSI = g_esData[i].dmgSI;
-			int dmgCI = g_esData[i].dmgCI;
-			float fPath = g_esData[i].PlayerPath;
-			int iPlayerPoint = RoundToNearest((dmgSI / 50 + dmgCI) * fPath);
-			iPointSum += iPlayerPoint;
-		}
-	}
-	return (g_iTotalPoint + iPointSum);
+int GetTeamPoints()
+{
+    int teamPoints = 0;
+    for (int i = 1; i <= MaxClients; i++)
+    {
+        if (!IsFakeClient(i) && IsClientInGame(i))
+        {
+            switch (GetClientTeam(i))
+            {
+                case 1:
+                {
+                    if (GetClientOfIdlePlayer(i) > 0)
+                        teamPoints += g_esPlayerCP[i].GetCompletePoint();
+                }
+                case 2:
+                {
+                    teamPoints += g_esPlayerCP[i].GetCompletePoint();
+                }
+            }
+        }
+    }
+    return teamPoints;
 }
 
-int native_GetTeamBonus(Handle plugin, int numParams){
-	return GetTeamBonus();
+int native_GetTeamBonus(Handle plugin, int numParams)
+{
+    return GetTeamBonus();
 }
 
 /**
  * 获取团队的奖励分
- * 
+ *
  * @return 返回生还的奖励分
  */
-int GetTeamBonus(){
-	float fHealth = 0.0;
-	int count = 0;
-	for(int i = 1; i <= MaxClients; i++){
-		if(IsValidSur(i)){
-			if(IsPlayerAlive(i))
-				fHealth += float(GetClientHealth(i));
-			count++;
-		}
-	}
-	float fBonus = fHealth / float(count);
-	return RoundToNearest(fBonus);
+int GetTeamBonus()
+{
+    return -1;
 }

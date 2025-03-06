@@ -17,20 +17,23 @@
 
 2024.09.09 - v1.6.2
 	修复路程的%不正常显示的问题
+
+2025.02.23 - v1.7.1
+	新增灭团统计
 */
 public Plugin myinfo =
 {
 	name		= "l4d2 dynamic hostname",
 	author		= "MopeCup",
 	description = "动态修改服名.",
-	version		= "1.7.0"
+	version		= "1.7.1"
 };
 
 //-----变量-----
 static char		 serverNamePath[128], modeNamePath[128];
 static KeyValues key, kv;
 
-bool			 bLateLoad, bSpecialSpawner;
+bool			 bLateLoad, bSpecialSpawner, bTeapotCommands;
 
 ConVar			 cvServerName, cvGameMode;
 
@@ -44,6 +47,8 @@ native int		 SS_GetSILimit();
 native int		 SS_GetSISpawnTime();
 // //bots
 // native int GetBotJoinLimit();
+// l4d2 teapot commands
+native int GetRestartTime();
 
 //-----插件库-----
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
@@ -53,6 +58,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	MarkNativeAsOptional("SS_GetSISpawnTime");
 	// //bots
 	// MarkNativeAsOptional("GetBotJoinLimit");
+	// l4d2 teapot commands
+	MarkNativeAsOptional("GetRestartTime");
 
 	BuildPath(Path_SM, serverNamePath, sizeof(serverNamePath), SERVER_NAME_PATH);
 	BuildPath(Path_SM, modeNamePath, sizeof modeNamePath, MODE_NAME_PATH);
@@ -77,6 +84,7 @@ public void OnAllPluginsLoaded()
 {
 	// bTeapot = LibraryExists("l4d2_Teapot");
 	bSpecialSpawner = LibraryExists("specialspawner");
+	bTeapotCommands = LibraryExists("teapot_commands");
 }
 
 public void OnLibraryAdded(const char[] sName)
@@ -86,6 +94,9 @@ public void OnLibraryAdded(const char[] sName)
 
 	if (StrEqual(sName, "specialspawner"))
 		bSpecialSpawner = true;
+
+	if (StrEqual(sName, "teapot_commands"))
+		bTeapotCommands = true;
 }
 
 public void OnLibraryRemoved(const char[] sName)
@@ -95,6 +106,8 @@ public void OnLibraryRemoved(const char[] sName)
 
 	if (StrEqual(sName, "specialspawner"))
 		bSpecialSpawner = false;
+	if (StrEqual(sName, "teapot_commands"))
+		bTeapotCommands = false;
 }
 
 //-----插件开始-----
@@ -219,6 +232,15 @@ void setServerName()
 	}
 
 	StrCat(sFinalServerName, sizeof(sFinalServerName), sInfectedInfo);
+
+	//灭团次数
+	if (bTeapotCommands)
+	{
+		char sRestart[32];
+		FormatEx(sRestart, sizeof sRestart, "[重启%d]", GetRestartTime());
+		StrCat(sFinalServerName, sizeof sFinalServerName, sRestart);
+	}
+
 	//配置路程状态
 	char sCurrentInfo[32] = { '\0' };
 
