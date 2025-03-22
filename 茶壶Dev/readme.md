@@ -52,9 +52,72 @@
     ```
 </details>
 
-# 仓库当前版本: 1.2.5
+# 仓库当前版本: 1.2.6
 
 # 茶壶详细更新日志
+### v1.2.6
+* <details><summary>优化与bug修复</summary>
+
+    * 内容：
+
+        1. 特感仇恨优化
+        2. 增加投票重置刷特以解决卡特问题
+        3. 刷新服务器增加刷新管理员
+        4. 调整了infected_glow的位置
+        5. 调整了初始给物品与只有小药投票的冲突问题
+        6. 调整了击杀提示的显示样式
+        7. 删除了l4d2_tank_ranking.smx
+        8. 新增灭团次数统计
+        9. 更换了bot加智方案
+        10. 修复过关回血bug
+        11. 取消了生还之间友伤造成的屏幕晃动
+        12. 再次调整了栓狙伤害
+
+    * 文件：
+
+        * 新增
+
+            1. addons/sourcemod/data/l4d_target_override.cfg
+            2. addons/sourcemod/plugins/2_Fix/l4d_target_override.smx
+            3. addons/sourcemod/scripting/1_P/l4d_target_override.sp
+            4. addons/sourcemod/gamedata/l4d_target_override.txt
+            5. cfg/vote/spawnRule/resetSpawn.cfg
+            6. addons/sourcemod/plugins/4_G/infected_glow.smx
+            7. scripts/
+            8. addons/left4lib.vpk
+            9. addons/nav fixes.vpk
+
+        * 改动
+
+            1. addons/sourcemod/data/config_vote_DG.cfg
+            2. addons/sourcemod/data/config_vote_MS.cfg
+            3. addons/sourcemod/data/config_vote_TR.cfg
+            4. addons/sourcemod/data/config_HT.cfg
+            5. cfg/vote/serverSetting/refreshServer.cfg
+            6. cfg/vote/funVote/sIGlow_on.cfg
+            7. cfg/vote/funVote/sIGlow_off.cfg
+            8. cfg/vote/weaponRule/w_All.cfg
+            9. cfg/vote/weaponRule/w_OnlyPills.cfg
+            10. addons/sourcemod/plugins/4_G/l4d2_kill-special_announce.smx
+            11. addons/sourcemod/scripting/1_P/l4d2_kill-special_announce.sp
+            12. addons/sourcemod/plugins/5_S/l4d2_teapot_commands.smx
+            13. addons/sourcemod/plugins/5_S/l4d2_dynamic_hostname.smx
+            14. addons/sourcemod/scripting/1_P/l4d2_teapot_commands.sp
+            15. addons/sourcemod/scripting/1_P/l4d2_dynamic_hostname.sp
+            16. addons/sourcemod/plugins/4_G/health_return.smx
+            17. addons/sourcemod/scripting/1_P/health_return.sp
+            18. addons/sourcemod/plugins/4_G/enhance_bolt-action_sniper.smx
+            19. addons/sourcemod/scripting/1_P/enhance_bolt-action_sniper.sp
+            20. cfg/2_PluginsCfgOnce.cfg
+
+        * 删除
+
+            1. addons/sourcemod/plugins/disabled/[FV]infected_glow.smx
+            2. addons/sourcemod/plugins/4_G/l4d2_tank_ranking.smx
+            3. addons/sourcemod/plugins/2_F/l4d2_sb_fix.smx
+
+
+
 ### v1.2.5
 * <details><summary>小型优化</summary>
 

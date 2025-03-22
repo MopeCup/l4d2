@@ -9,8 +9,8 @@ public Plugin myinfo= {
 	name = "Enhance Bolt-ation Sniper",
 	author = "MopeCup",
 	description = "增强栓狙",
-	version = "1.0.1",
-	url = "N/A"
+	version = "1.0.2",
+	url = "https://github.com/MopeCup/l4d2/tree/main/my%20plugins/enhance_bolt-action_sniper"
 };
 
 //=================================================================
@@ -48,30 +48,31 @@ Action TraceAttack(int victim, int &attacker, int &inflictor, float &damage, int
         //PrintToChat(attacker, "%.1f", damage);
         return Plugin_Changed;
     }
+    damage = damage * 2.0;
     int iSIClass = GetEntProp(victim, Prop_Send, "m_zombieClass");
     switch(iSIClass){
         case 3:{
             if(GetEntProp(victim, Prop_Send, "m_isAttemptingToPounce")){
-                damage = damage * 2.0;
+                damage = damage * 1.25;
                 //PrintToChat(attacker, "%.1f", damage);
                 return Plugin_Changed;
             }
         }
         case 5:{
             if(IsJockeyLeaping(victim)){
-                damage = damage * 2.0;
+                damage = damage * 1.25;
                 //PrintToChat(attacker, "%.1f", damage);
                 return Plugin_Changed;
             }
         }
         case 6:{
             if(IsCharging(victim)){
-                damage = damage * 2.0;
+                damage = damage * 1.25;
                 return Plugin_Changed;
             }
         }
     }
-    return Plugin_Continue;
+    return Plugin_Changed;
 }
 
 //=================================================================

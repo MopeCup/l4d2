@@ -206,7 +206,8 @@ void HealClient(int client)
 		// int iMaxHealth = GetEntProp(client, Prop_Data, "m_iMaxHealth");
 		int	  realHealth = GetEntProp(client, Prop_Data, "m_iHealth");
 		float fakeHealth = GetEntPropFloat(client, Prop_Send, "m_healthBuffer");
-		if(GetEntProp(client, Prop_Send, "m_isIncapacitated") == 0 || GetEntProp(client, Prop_Send, "m_isHangingFromLedge") != 1)
+		int isIncapacitated = GetEntProp(client, Prop_Send, "m_isIncapacitated");
+		if(isIncapacitated == 0 || GetEntProp(client, Prop_Send, "m_isHangingFromLedge") != 1)
 		    fakeHealth = GetEntPropFloat(client, Prop_Send, "m_healthBuffer");
 		else
 		    fakeHealth = 0.0;
@@ -214,7 +215,7 @@ void HealClient(int client)
 		//解除倒地状态与黑白
 		CheatCommand(client, "give", "health");
 		//总血量低于回复血量
-		if (allHealth < safeNaps)
+		if (allHealth < safeNaps || isIncapacitated == 1)
 		{
 			SetEntProp(client, Prop_Data, "m_iHealth", RoundToCeil(safeNaps));
 			SetEntPropFloat(client, Prop_Send, "m_healthBuffer", 0.0);
