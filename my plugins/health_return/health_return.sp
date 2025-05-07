@@ -11,7 +11,7 @@ public Plugin myinfo =
 	name		= "Health Return",
 	author		= "MopeCup",
 	description = "击杀特感回血与过关回血",
-	version		= "1.0.8",
+	version		= "1.0.9",
 	url			= "https://github.com/MopeCup/l4d2"
 
 }
@@ -23,6 +23,8 @@ ConVar g_cvReturnType,
 	   g_cvSafeRoomNaps, g_cvBaseReturn, g_cvSkillRate, g_cvMeleeRate, g_cvFarDistance, g_cvFarRate, g_cvDangerRate, g_cvHeadShotRate, g_cvMaxHealth;
 
 int	  g_iSafeRoomNaps, g_iMaxHealth;
+
+Handle g_hRoundStartHeal;
 
 float g_fBaseReturn, g_fSkill, g_fMelee, g_fFarDistance, g_fFar, g_fDanger, g_fHeadShot;
 
@@ -106,6 +108,8 @@ void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue
 void Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 {
 	g_bLeftSafeArea = false;
+	delete g_hRoundStartHeal;
+	g_hRoundStartHeal = CreateTimer(1.0, Timer_RoundStartHeal);
 }
 
 void Event_PlayerLeftSafeArea(Event event, const char[] name, bool dontBroadcast)
@@ -128,10 +132,11 @@ void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 		g_bIsSkillKill[client] = false;
 		return;
 	}
-	if (IsValidSur(client) && !g_bLeftSafeArea)
-	{
-		SafeRoomNap(client);
-	}
+	// if (IsValidSur(client) && !g_bLeftSafeArea)
+	// {
+	// 	SafeRoomNap(client);
+		
+	// }
 }
 
 void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
@@ -177,6 +182,16 @@ void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 
 		ReturnHealthToPlayer(attacker, bSkill, bMelee, bFar, bDanger, bHeadShot);
 	}
+}
+
+Action Timer_RoundStartHeal(Handle timer)
+{
+	g_hRoundStartHeal = null;
+	if (g_bLeftSafeArea)
+		return Plugin_Continue;
+	SafeRoomNap(0);
+	g_hRoundStartHeal = CreateTimer(1.0, Timer_RoundStartHeal);
+	return Plugin_Continue;
 }
 
 //===============================================================

@@ -32,7 +32,7 @@ int GetCompletePoint()
 {
     this.basicCP       = RoundToNearest((this.sI + this.cI * 50) * this.maxFlow);
     this.completeBonus = this.dmgCB / 160.0;
-    return RoundToNearest(this.basicCP * (1 + this.completeBonus));
+    return RoundToNearest(this.basicCP * (1 + this.completeBonus) / 50);
 }
 }
 

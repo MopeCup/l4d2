@@ -12,12 +12,14 @@ float  g_fHealDuration;
 
 bool   g_bHealing;
 
+Handle g_hReset;
+
 public Plugin myinfo =
 {
 	name		= "Saferoom Fast Healing",
 	author		= "Eärendil, MopeCup",
 	description = "玩家处于安全区域时能秒包",
-	version		= "25m1w1a",
+	version		= "25m3w5a",
 };
 //原作者地址https://forums.alliedmods.net/showthread.php?t=335683
 public void OnPluginStart()
@@ -30,6 +32,11 @@ public void OnPluginStart()
 	g_fHealDuration	 = g_cvHealDuration.FloatValue;
 
 	InitGameData();
+}
+
+public void OnAllPluginsLoaded()
+{
+	g_fHealDuration = g_cvHealDuration.FloatValue;
 }
 
 void InitGameData()
@@ -72,7 +79,7 @@ MRESReturn MedStartAct(Handle hReturn, Handle hParams)
 	if (IsClientInSafeArea(client) && IsClientInSafeArea(target))
 	{
         //PrintToChatAll("pass");
-		g_fHealDuration = g_cvHealDuration.FloatValue;
+		//g_fHealDuration = g_cvHealDuration.FloatValue;
 		g_cvHealDuration.SetFloat(duration, true, false);
 		g_bHealing = true;
 	}
@@ -84,7 +91,8 @@ MRESReturn MedStartAct_Post(Handle hReturn, Handle hParams)
 	if (g_bHealing)
 	{
         //PrintToChatAll("Pass2");
-        CreateTimer(0.1, Timer_ResetDuration);
+		delete g_hReset;
+        g_hReset = CreateTimer(0.1, Timer_ResetDuration);
 		//g_cvHealDuration.SetFloat(g_fHealDuration, true, false);
 		g_bHealing = false;
 	}
@@ -93,6 +101,7 @@ MRESReturn MedStartAct_Post(Handle hReturn, Handle hParams)
 
 Action Timer_ResetDuration(Handle timer)
 {
+	g_hReset = null;
     g_cvHealDuration.SetFloat(g_fHealDuration, true, false);
     return Plugin_Stop;
 }

@@ -192,10 +192,10 @@ void setServerName()
 	if (kv.JumpToKey(sGameMode, false))
 	{
 		kv.GetString("name", sGameModeName, sizeof sGameModeName);
-		FormatEx(sGameMode, sizeof sGameMode, "[%s - ", sGameModeName);
+		FormatEx(sGameMode, sizeof sGameMode, "[%s", sGameModeName);
 	}
 	else
-		FormatEx(sGameMode, sizeof sGameMode, "[其他 - ");
+		FormatEx(sGameMode, sizeof sGameMode, "[其他");
 	//此部分可以自行添加模式代码
 	// if(strcmp(sGameMode, "coop", false) == 0)
 	//     FormatEx(sGameMode, sizeof(sGameMode), "[战役 - ");
@@ -215,14 +215,15 @@ void setServerName()
 	//特感刷新
 	char  sInfectedInfo[32];
 	int	  iMaxSpecials;
-	float fRespawnInterval;
-	//未加载specialspawner刷特插件时，我们选择调用官方导演刷特数据
+	//float fRespawnInterval;
+	//未加载specialspawner刷特插件时我们选择不显示
 	if (!bSpecialSpawner)
 	{
-		iMaxSpecials	 = L4D2_GetScriptValueInt("MaxSpecials", -1);
-		fRespawnInterval = L4D2_GetScriptValueFloat("SpecialRespawnInterval", -1.0);
+		// iMaxSpecials	 = L4D2_GetScriptValueInt("MaxSpecials", -1);
+		// fRespawnInterval = L4D2_GetScriptValueFloat("SpecialRespawnInterval", -1.0);
 
-		FormatEx(sInfectedInfo, sizeof(sInfectedInfo), "%d特%d秒]", iMaxSpecials, RoundToNearest(fRespawnInterval));
+		// FormatEx(sInfectedInfo, sizeof(sInfectedInfo), "%d特%d秒]", iMaxSpecials, RoundToNearest(fRespawnInterval));
+		strcopy(sInfectedInfo, sizeof sInfectedInfo, "]");
 	}
 	else {
 		iMaxSpecials = SS_GetSILimit();

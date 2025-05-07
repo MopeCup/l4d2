@@ -46,7 +46,7 @@ public Plugin myinfo =
 	name = "l4d2 TankFight",
 	author = "MopeCup",
 	description = "处理克局的各项事宜",
-	version = "1.10.0"
+	version = "1.10.1"
 };
 
 //===================================================================================
@@ -114,6 +114,7 @@ public void OnPluginStart(){
 
     HookEvent("round_start", Event_RoundStart, EventHookMode_PostNoCopy);
     HookEvent("round_end", Event_RoundEnd, EventHookMode_PostNoCopy);
+    HookEvent("tank_spawn", Event_TankSpawn);
     HookEvent("tank_killed", Event_TankDeath);
 
     PrecacheSound("ui/pickup_secret01.wav", false);
@@ -172,6 +173,15 @@ void Event_RoundStart(Event event, const char[] name, bool dontBroadcast){
 
 void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast){
     OnMapEnd();
+}
+
+void Event_TankSpawn(Event event, const char[] name, bool dontBroadcast){
+    int tank = GetClientOfUserid(event.GetInt("userid"));
+    if (!tank || !IsClientInGame(tank))
+        return;
+    int tankFlow;
+    tankFlow = RoundToFloor(L4D2Direct_GetFlowDistance(tank) / L4D2Direct_GetMapMaxFlowDistance() * 100.0);
+    PrintToChatAll("[!]Tank生成位置为%d%%", tankFlow);
 }
 
 void Event_TankDeath(Event event, const char[] name, bool dontBroadcast){

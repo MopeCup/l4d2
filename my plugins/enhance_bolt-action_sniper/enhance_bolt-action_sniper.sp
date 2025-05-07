@@ -48,26 +48,26 @@ Action TraceAttack(int victim, int &attacker, int &inflictor, float &damage, int
         //PrintToChat(attacker, "%.1f", damage);
         return Plugin_Changed;
     }
-    damage = damage * 2.0;
+    damage = damage * 2.2;
     int iSIClass = GetEntProp(victim, Prop_Send, "m_zombieClass");
     switch(iSIClass){
         case 3:{
             if(GetEntProp(victim, Prop_Send, "m_isAttemptingToPounce")){
-                damage = damage * 1.25;
+                damage = damage * 1.3;
                 //PrintToChat(attacker, "%.1f", damage);
                 return Plugin_Changed;
             }
         }
         case 5:{
             if(IsJockeyLeaping(victim)){
-                damage = damage * 1.25;
+                damage = damage * 1.3;
                 //PrintToChat(attacker, "%.1f", damage);
                 return Plugin_Changed;
             }
         }
         case 6:{
             if(IsCharging(victim)){
-                damage = damage * 1.25;
+                damage = damage * 1.3;
                 return Plugin_Changed;
             }
         }
