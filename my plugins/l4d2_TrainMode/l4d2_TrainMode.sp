@@ -12,27 +12,21 @@ public Plugin myinfo =
 {
 	name = "l4d2_TrainMode",
 	author = "fdxx, MopeCup",
-	version = "1.3.3",
+	version = "1.4.0",
 }
 
-//ConVar g_hGodModeEnable;
 ConVar g_cvSIDmg;
 ConVar g_cvScratcheDmg;
 ConVar g_cvTankDmg;
+ConVar g_cvGod;
 
-int g_iPlayerNum;
+Handle g_hTimer;
 
-bool g_bGod;
-//bool g_bTongueGrab[MAXPLAYERS+1][MAXPLAYERS+1];
-//bool g_bJump;
-bool g_bOneShot;
 bool g_bL4D2Version;
 
-float g_fDamageTheSIGet[MAXPLAYERS+1];
 float g_fSIDmg;
 float g_fScratchDmg;
 float g_fTankDmg;
-float g_fTankHealth;
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) 
 {
@@ -56,6 +50,8 @@ public void OnPluginStart(){
     g_cvScratcheDmg = CreateConVar("l4d2_train_scratch_dmg", "2.0", "特感肘击的伤害", FCVAR_NOTIFY, true, 1.0, true, 200.0);
     g_cvTankDmg = CreateConVar("l4d2_train_tank_dmg", "24.0", "坦克造成的伤害", FCVAR_NOTIFY, true, 1.0, true, 200.0);
 
+    g_cvGod = FindConVar("god");
+
     //AutoExecConfig(true, l4d2_TrainMode);
 
     g_cvSIDmg.AddChangeHook(ConVarChanged_Dmg);
@@ -65,16 +61,11 @@ public void OnPluginStart(){
     GetCvars();
 
     RegConsoleCmd("sm_mgod", Cmd_EnableGodMode);
-    RegConsoleCmd("sm_mos", Cmd_EnableOneShotMode);
-    CreateTimer(180.0, Timer_NoticeOfCmd, _, TIMER_REPEAT);
-    g_bGod = false;
-    g_bOneShot = false;
 
-    HookEvent("player_incapacitated_start", Event_IncapacitatedStart);
+    HookEvent("tank_spawn", Event_TankSpawn);
     HookEvent("round_start", Event_RoundStart, EventHookMode_PostNoCopy);
     HookEvent("round_end", Event_RoundEnd, EventHookMode_PostNoCopy);
-    HookEvent("tank_spawn", Event_TankSpawn);
-    //HookEvent("tongue_grab", Event_Tongue_Grab);
+    HookEvent("charger_charge_end", Event_ChargerChargeEnd, EventHookMode_Post);
 }
 
 void ConVarChanged_Dmg(ConVar convar, const char[] oldValue, const char[] newValue){
@@ -87,149 +78,56 @@ void GetCvars(){
     g_fTankDmg = GetConVarFloat(g_cvTankDmg);
 }
 
-// //当用户完全加入游戏后
-// //我们使用数组储存玩家是否被舌头控制
-// public void OnClientPostAdminCheck(int client){
-//     //我们仅仅初始化非bot生还
-//     if(IsValidSur(client) && !IsFakeClient(client) && IsPlayerAlive(client)){
-//         int i;
-//         for(i = 1 && i < MAXPLAYERS+1; i++){
-//             g_bTongueGrab[client][i] = false;
-//         }
-//     }
-// }
-
 Action Cmd_EnableGodMode(int client, int args){
-    //如果开启了一击必杀，不能使用!mgod
-    if(g_bOneShot){
-        CPrintToChat(client, "{olive}[提示] {blue}请先关闭一击必杀模式！指令为 {green}!mos");
-        return Plugin_Handled;
-    }
-
-    //如果没开无敌，开启无敌
-    // if(!g_bGod){
-    //     g_bGod = true;
-    //     CPrintToChat(client, "{olive}[提示] {blue}已开启无敌,输入{green}!mgod{blue}可关闭无敌");
-    // }
-    // else{
-    //     g_bGod = false;
-    //     CPrintToChat(client, "{olive}[提示] {blue}已关闭无敌，输入{green}!mgod{blue}可开启无敌");
-    // }
-    g_bGod = !g_bGod;
-    CPrintToChatAll("{olive}[提示] {blue}已%s无敌模式，输入{green}!mgod{blue}可%s无敌模式", g_bGod ? "开启" : "关闭", g_bGod ? "关闭" : "开启");
+    bool bGod = g_cvGod.BoolValue;
+    bGod = !bGod;
+    g_cvGod.BoolValue = bGod;
+    CPrintToChatAll("{olive}[提示] {blue}已%s无敌模式，输入{green}!mgod{blue}可%s无敌模式", bGod ? "开启" : "关闭", bGod ? "关闭" : "开启");
 
     return Plugin_Continue;
-}
-
-//一击必杀模式必须在关闭无敌才能启用
-//若已经开启无敌，不能开启一击必杀
-//若开启一击必杀，不能开启无敌
-Action Cmd_EnableOneShotMode(int client, int args){
-    //如果开启了无敌，不允许开启一击必杀
-    if(g_bGod){
-        CPrintToChat(client, "{olive}[提示] {blue}请先关闭无敌模式！指令为 {green}!mgod");
-        return Plugin_Handled;
-    }
-
-    g_bOneShot = !g_bOneShot;
-    CPrintToChatAll("{olive}[提示] {blue}已%s一击必杀模式，输入{green}!mos{blue}可%s一击必杀模式", g_bOneShot ? "开启" : "关闭", g_bOneShot ? "关闭" : "开启");
-
-    return Plugin_Continue;
-}
-
-public Action Timer_NoticeOfCmd(Handle tiemr){
-    CPrintToChatAll("{olive}[提示] {blue}被舌头控住后可按空格强制解控");
-
-    if(!g_bOneShot)
-        CPrintToChatAll("{olive}[提示] {blue}输入{green}!mgod{blue}可%s无敌", g_bGod ? "关闭" : "开启");
-
-    if(!g_bGod)
-        CPrintToChatAll("{olive}[提示] {blue}输入{green}!mos{blue}可%s一击必杀模式", g_bOneShot ? "关闭" : "开启");
-
-    return Plugin_Continue;
-}
-
-public void OnMapStart(){
-    ResetPlugin();
-}
-
-void Event_RoundStart(Event event, const char[] name, bool dontBroadcast){
-    ResetPlugin();
-}
-
-void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast){
-    ResetPlugin();
-}
-
-public void OnMapEnd(){
-    ResetPlugin();
-}
-
-void ResetPlugin(){
-    //g_iPlayerNum = 0;
-
-    int i;
-    //int j;
-
-    for(i = 1; i < MAXPLAYERS+1; i++){
-        g_fDamageTheSIGet[i] = 0.0;
-        // for(j = 0; j < MAXPLAYERS+1; j++){
-        //     g_bTongueGrab[i][j] = false;
-        // }
-    }
 }
 
 public void OnClientPutInServer(int client)
 {
 	SDKUnhook(client, SDKHook_OnTakeDamage, OnTakeDamage);
 	SDKHook(client, SDKHook_OnTakeDamage, OnTakeDamage);
+}
 
-    // if(IsValidSur(client)){
-    //     int i;
-    //     for(i = 1; i < MaxClients; i++){
-    //         if(!IsValidSur(i))
-    //             continue;
-    //         g_iPlayerNum++;
-    //     }
-    // }
+void Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
+{
+    delete g_hTimer;
+    g_hTimer = CreateTimer(600.0, Timer_NoticeOfCmd);
+}
+
+void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
+{
+    delete g_hTimer;
 }
 
 void Event_TankSpawn(Event event, const char[] name, bool dontBroadcast){
-    int j = 0;
+    int player = 0;
     int i;
     for(i = 1; i < MaxClients; i++){
         if(!IsValidSur(i) || !IsPlayerAlive(i))
             continue;
-        j++;
+        player++;
     }
-    g_iPlayerNum = j;
 
-    if(g_iPlayerNum < 4)
-        g_fTankHealth = g_iPlayerNum * 2000.0;
-    else
-        g_fTankHealth = 8000.0;
+    int tank = GetClientOfUserId(event.GetInt("userid"));
+    if (!tank)
+        return;
+    int tankHealth;
+    tankHealth = 2000 * player;
+    SetEntProp(tank, Prop_Data, "m_iHealth", tankHealth);
 }
 
-bool IsValidSur(int client){
-    if (client > 0 && client <= MaxClients)
-	{
-		if (IsClientInGame(client) && GetClientTeam(client) == 2)
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-bool IsValidSI(int client){
-    if (client > 0 && client <= MaxClients)
-	{
-		if (IsClientInGame(client) && GetClientTeam(client) == 3)
-		{
-			return true;
-		}
-	}
-	return false;
+//charger冲锋结束且未携带生还时立即处死
+void Event_ChargerChargeEnd(Event event, const char[] name, bool dontBroadcast)
+{
+    int charger = GetClientOfUserId(event.GetInt("userid"));
+    if (!charger)
+        return;
+    ForcePlayerSuicide(charger);
 }
 
 static const char g_sSpecialName[][] =
@@ -237,174 +135,69 @@ static const char g_sSpecialName[][] =
 	"", "Smoker", "Boomer", "Hunter", "Spitter", "Jockey", "Charger"
 };
 
-Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype){
-    //生还Part
-    if(IsPlayerAlive(victim) && IsValidSur(victim)){
+Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
+{
+    bool bGod = g_cvGod.BoolValue;
+
+    if (IsValidSur(victim) && IsPlayerAlive(victim))
+    {
         damage = 0.0;
-        if(IsPlayerAlive(attacker) && IsValidSI(attacker)){
-            int g_iSI_ID;
-            g_iSI_ID = GetEntProp(attacker, Prop_Send, "m_zombieClass");
-            // if(IsPlayerGetContolled(attacker, g_iSI_ID)){
-            //     //damage = 0.0;
-            //     if(!g_bGod)
-            //         SDKHooks_TakeDamage(victim, attacker, attacker, g_fSIDmg);
-            //     if(!IsFakeClient(attacker))
-            //         CPrintToChatAll("{blue}[茶壶] {olive}%s (%N) {default}还剩余 {yellow}%i {default}血量.", g_sSpecialName[g_iSI_ID], attacker, GetEntProp(attacker, Prop_Data, "m_iHealth"));
-            //     else CPrintToChatAll("{blue}[茶壶] {olive}%N {default}还剩余 {yellow}%i {default}血量.", attacker, GetEntProp(attacker, Prop_Data, "m_iHealth"));
-
-            //     ForcePlayerSuicide(attacker);
-            //     //return Plugin_Changed;
-            // }
-
-            // if(IsTank(g_iSI_ID) && !g_bGod)
-            //     SDKHooks_TakeDamage(victim, attacker, attacker, g_fTankDmg);
-            // if(!g_bGod)
-            //     damage = 1.0;
-            // damage = 0.0;
-            //return Plugin_Changed;
-
-            switch(g_iSI_ID){
-                //smoker
-                case 1:
+        if (IsPlayerAlive(attacker) && IsValidSI(attacker))
+        {
+            int iClass = GetEntProp(attacker, Prop_Send, "m_zombieClass");
+            switch (iClass)
+            {
+                case 1,3,5,6:
                 {
-                    if(IsPlayerGetContolled(attacker, g_iSI_ID)){
-                        if(g_bOneShot)
-                            ForcePlayerSuicide(victim);
-                        else{
-
-                            //被控下造成10点伤害
-                            if(!g_bGod && !IsPlayerGetUp(victim))
-                                SDKHooks_TakeDamage(victim, attacker, attacker, g_fSIDmg);
-                            DamageReport(attacker, g_iSI_ID);
-                        
-                            ForcePlayerSuicide(attacker);
+                    if(IsPlayerGetContolled(attacker, iClass))
+                    {
+                        if (!bGod && !IsPlayerGetUp(victim))
+                            SDKHooks_TakeDamage(victim, attacker, attacker, g_fSIDmg);
+                        DamageReport(victim, attacker, iClass);
+                        ForcePlayerSuicide(attacker);
+                    }
+                    else
+                    {
+                        if (!bGod && !IsPlayerGetUp(victim))
+                        {
+                            SDKHooks_TakeDamage(victim, attacker, attacker, g_fScratchDmg);
                         }
                     }
-                    else{
-                        //肘击造成5点伤害
-                        if(!g_bGod && !IsPlayerGetUp(victim))
-                            SDKHooks_TakeDamage(victim, attacker, attacker, g_fScratchDmg);
-                    }
                 }
-                //boomer
-                case 2:
+                case 2,4:
                 {
-                    if(!g_bGod && !IsPlayerGetUp(victim))
+                    if (!bGod && !IsPlayerGetUp(victim))
+                    {
                         SDKHooks_TakeDamage(victim, attacker, attacker, g_fScratchDmg);
-                }
-                //hunter
-                case 3:
-                {
-                    if(IsPlayerGetContolled(attacker, g_iSI_ID)){
-                        if(g_bOneShot)
-                            ForcePlayerSuicide(victim);
-                        else{
-
-                            //被控下造成10点伤害
-                            if(!g_bGod && !IsPlayerGetUp(victim))
-                                SDKHooks_TakeDamage(victim, attacker, attacker, g_fSIDmg);
-                            DamageReport(attacker, g_iSI_ID);
-                        
-                            ForcePlayerSuicide(attacker);
-                        }
-                    }
-                    else{
-                        //肘击造成5点伤害
-                        if(!g_bGod && !IsPlayerGetUp(victim))
-                            SDKHooks_TakeDamage(victim, attacker, attacker, g_fScratchDmg);
                     }
                 }
-                //spitter
-                case 4:
-                {
-                    //每次1点
-                    if(!g_bGod){
-                        SDKHooks_TakeDamage(victim, attacker, attacker, 1.0);
-                    }
-                }
-                //jockey
-                case 5:
-                {
-                    if(IsPlayerGetContolled(attacker, g_iSI_ID)){
-                        if(g_bOneShot)
-                            ForcePlayerSuicide(victim);
-                        else{
-
-                            //被控下造成10点伤害
-                            if(!g_bGod && !IsPlayerGetUp(victim))
-                                SDKHooks_TakeDamage(victim, attacker, attacker, g_fSIDmg);
-                            DamageReport(attacker, g_iSI_ID);
-                        
-                            ForcePlayerSuicide(attacker);
-                        }
-                    }
-                    else{
-                        //肘击造成5点伤害
-                        if(!g_bGod && !IsPlayerGetUp(victim))
-                            SDKHooks_TakeDamage(victim, attacker, attacker, g_fScratchDmg);
-                    }
-                }
-                //charger
-                case 6:
-                {
-                    if(IsPlayerGetContolled(attacker, g_iSI_ID)){
-                        if(g_bOneShot)
-                            ForcePlayerSuicide(victim);
-                        else{
-
-                            //被控下造成10点伤害
-                            if(!g_bGod && !IsPlayerGetUp(victim))
-                                SDKHooks_TakeDamage(victim, attacker, attacker, g_fSIDmg);
-                            DamageReport(attacker, g_iSI_ID);
-                        
-                            ForcePlayerSuicide(attacker);
-                        }
-                    }
-                    else{
-                        //肘击造成5点伤害
-                        if(!g_bGod && !IsPlayerGetUp(victim))
-                            SDKHooks_TakeDamage(victim, attacker, attacker, g_fScratchDmg);
-                    }
-                }
-                //Tank
                 case 8:
                 {
-                    if(g_bOneShot)
-                        ForcePlayerSuicide(victim);
-                    else{
-                        if(!g_bGod && !IsPlayerGetUp(victim))
-                            SDKHooks_TakeDamage(victim, attacker, attacker, g_fTankDmg);
+                    if (!bGod && !IsPlayerGetUp(victim))
+                    {
+                        SDKHooks_TakeDamage(victim, attacker, attacker, g_fTankDmg);
                     }
                 }
             }
         }
-        //damage = 0.0;
         return Plugin_Changed;
     }
-
-    //Tank Part
-    if(IsPlayerAlive(victim) && IsValidSI(victim)){
-        int g_iSI_ID;
-        g_iSI_ID = GetEntProp(victim, Prop_Send, "m_zombieClass");
-        //PrintToChatAll("iClass为%d", g_iSI_ID);
-        if(g_iSI_ID == 8){
-            //生还造成的伤害
-            if(!(g_fDamageTheSIGet[victim] < g_fTankHealth)){
-                ForcePlayerSuicide(victim);
-                g_fDamageTheSIGet[victim] = 0.0;
-            }
-            else
-                g_fDamageTheSIGet[victim] += damage;
-        }
-    }
-
     return Plugin_Continue;
 }
 
-void DamageReport(int attacker, int iClass){
+Action Timer_NoticeOfCmd(Handle timer)
+{
+    g_hTimer = null;
+    CPrintToChatAll("{blue}[!]使用指令{olive}!mgod{blue}以%s{orange}无敌模式\n", g_cvGod.BoolValue ? "关闭" : "开启");
+    CPrintToChatAll("{blue}[!]被舌头拉住时可以按{olive}空格{blue}提前{orange}解控"); 
+    g_hTimer = CreateTimer(600.0, Timer_NoticeOfCmd);
+    return Plugin_Continue;
+}
+
+void DamageReport(int client, int attacker, int iClass){
     if(!IsFakeClient(attacker))
-        CPrintToChatAll("{blue}[伤害报告] {olive}%s (%N) {default}还剩余 {yellow}%i {default}血量.", g_sSpecialName[iClass], attacker, GetEntProp(attacker, Prop_Data, "m_iHealth"));
-    else CPrintToChatAll("{blue}[伤害报告] {olive}%N {default}还剩余 {yellow}%i {default}血量.", attacker, GetEntProp(attacker, Prop_Data, "m_iHealth"));
+        CPrintToChat(client, "{blue}[伤害报告]{olive}%s(%N){blue}还剩余{orange}%i{blue}血量.", g_sSpecialName[iClass], attacker, GetEntProp(attacker, Prop_Data, "m_iHealth"));
+    else CPrintToChat(client, "{blue}[伤害报告]{olive}%N{blue}还剩余{orange}%i{blue}血量.", attacker, GetEntProp(attacker, Prop_Data, "m_iHealth"));
 
 }
 
@@ -420,38 +213,16 @@ bool IsPlayerGetContolled(int iSpecial, int iClass){
     return false;
 }
 
-// //舌头防卡死部分
-// void Event_Tongue_Grab(Event event, const char[] name, bool dontBroadcast){
-//     int attacker = GetClientOfUserId(GetEventInt(event, "userid"));
-//     int victim = GetClientOfUserId(GetEventInt(event, "victim"));
-
-//     //玩家被拉后对应数组存为true
-//     //CreateTimer(3.0, Timer_CheckTongueState, _, TIMER_REPEAT);
-//     g_bTongueGrab[victim][attacker] = true;
-// }
-
-// public Action PlayerJump(int client, const char[] command, int args){
-//     if(IsValidSur(client) && IsPlayerAlive(client))
-//         g_bJump = true;
-//     //CreateTimer(2.0, Timer_CheckJump);
-//     return Plugin_Stop;
-// }
-
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2]){
     //如果摁了跳跃
     if(buttons & IN_JUMP == IN_JUMP){
         if(IsValidSur(client) && IsPlayerAlive(client)){
             int attacker;
             if((attacker = GetEntPropEnt(client, Prop_Send, "m_tongueOwner")) > 0){
-                if(g_bOneShot)
-                    ForcePlayerSuicide(client);
-                else{
-                    if(!g_bGod && !IsPlayerGetUp(client))
-                        SDKHooks_TakeDamage(client, attacker, attacker, g_fSIDmg);
-                    DamageReport(attacker, 1);
-
-                    ForcePlayerSuicide(attacker);
-                }
+                if (!g_cvGod.BoolValue && !IsPlayerGetUp(client))
+                    SDKHooks_TakeDamage(client, attacker, attacker, g_fSIDmg);
+                DamageReport(client, attacker, 1);
+                ForcePlayerSuicide(attacker);
             }
         }
     }
@@ -516,8 +287,24 @@ bool IsPlayerGetUp(int client){
 	return false;
 }
 
-//玩家倒地后处死
-void Event_IncapacitatedStart(Event event, const char[] name, bool dontBroadcast){
-    int victim = GetClientOfUserId(event.GetInt("userid"));
-    ForcePlayerSuicide(victim);
+bool IsValidSur(int client){
+    if (client > 0 && client <= MaxClients)
+	{
+		if (IsClientInGame(client) && GetClientTeam(client) == 2)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool IsValidSI(int client){
+    if (client > 0 && client <= MaxClients)
+	{
+		if (IsClientInGame(client) && GetClientTeam(client) == 3)
+		{
+			return true;
+		}
+	}
+	return false;
 }
