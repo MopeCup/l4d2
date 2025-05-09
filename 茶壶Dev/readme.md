@@ -55,6 +55,65 @@
 # 仓库当前版本: 1.2.6
 
 # 茶壶详细更新日志
+### v1.2.7
+* <details><summary>训练更新</summary>
+
+    * 内容：
+
+        1. 回退特感仇恨优化
+        2. 回退bot加智
+        3. 调整大狙数值
+        4. 更新插件get_ammobyR表现形式
+        5. 多特新增多控配置
+        6. 新增免伤距离100设置
+        7. 修复高tick下boomer与spitter相关bug
+        8. 调整mp5伤害与换弹时间
+        9. 调整服名显示
+        10. 修复刷特半径可能会被地图脚本覆盖的问题
+        11. 重写了训练用插件
+
+    * 文件：
+
+        * 新增
+
+            1. addons/sourcemod/plugins/2_F/l4d2_sb_fix.smx
+            2. addons/sourcemod/gamedata/get_ammobyR.txt
+            3. cfg/vote/sINum/6...18tmd.cfg
+            4. cfg/vote/fastSetting/mS_6...8tmd5s.cfg
+            5. cfg/vote/friendlyFireSetting/immueDis_100.cfg
+            6. addons/sourcemod/plugins/2_F/l4d2_vomit_fix.smx
+            7. addons/sourcemod/plugins/2_F/l4d2_uniform_spit.sp
+            8. addons/sourcemod/gamedata/l4d2_vomit_fix.txt
+            9. addons/sourcemod/gamedata/l4d2_si_ability.txt
+            10. addons/sourcemod/scripting/1_P/l4d2_vomit_fix.sp
+            11. addons/sourcemod/scripting/1_P/l4d2_uniform_spit.sp
+            12. addons/sourcemod/plugins/2_F/l4d2_spawn_range_patch.smx
+            13. addons/sourcemod/gamedata/l4d2_spawn_range_patch.txt
+            14. addons/sourcemod/scripting/1_P/l4d2_spawn_range_patch.sp
+
+        * 改动
+
+            1. scripts/vscripts/director_base_addon.nut
+            2. cfg/2_PluginsCfgOnce.cfg
+            3. addons/sourcemod/plugins/4_G/get_ammobyR.smx
+            4. addons/sourcemod/scripting/1_P/get_ammobyR.sp
+            5. addons/sourcemod/plugins/4_G/enhance_bolt-action_sniper.smx
+            6. addons/sourcemod/scripting/1_P/enhance_bolt-action_sniper.sp
+            7. data/l4d2_config_vote.cfg
+            8. data/config_vote_MS.cfg
+            9. data/config_vote_DG.cfg
+            10. addons/sourcemod/plugins/5_S/l4d2_dynamic_hostname.smx
+            11. addons/sourcemod/scripting/1_P/l4d2_dynamic_hostname.sp
+            12. addons/sourcemod/plugins/disabled/[Tr]l4d2_TrainMode.smx
+            13. addons/sourcemod/scripting/1_P/l4d2_TrainMode.sp
+            14. cfg/vote/train/train.cfg
+
+        * 删除
+
+            1. addons/left4lib.vpk
+            2. addons/sourcemod/plugins/2_F/l4d_target_override.smx
+</details>
+
 ### v1.2.6
 * <details><summary>优化与bug修复</summary>
 
@@ -115,7 +174,7 @@
             1. addons/sourcemod/plugins/disabled/[FV]infected_glow.smx
             2. addons/sourcemod/plugins/4_G/l4d2_tank_ranking.smx
             3. addons/sourcemod/plugins/2_F/l4d2_sb_fix.smx
-
+</details>
 
 
 ### v1.2.5
@@ -160,6 +219,7 @@
             4. funVote/sIGlow_off.cfg
         * 删除cfg/vote/sINum/sINumForTrain
         * 新增addons/sourcemod/plugins/diabled/[FV]infected_glow.smx
+</details>
 
 ### v1.2.4
 * <details><summary>多特调整</summary>
